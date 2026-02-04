@@ -412,7 +412,37 @@ Records a file download event for analytics tracking.
 | `ip_address` | string | Yes | Client IP address (IPv4 or IPv6) |
 | `user_agent` | string | No | Client user agent string |
 
+**Example Request:**
+
+```bash
+curl -X POST "https://r2index.acme.com/downloads" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "remote_path": "acme/abuser",
+    "remote_filename": "abuser.csv",
+    "remote_version": "2026-02-03",
+    "ip_address": "192.168.1.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+  }'
+```
+
 **Response:** `201 Created` with download record including pre-computed time buckets.
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "remote_path": "acme/abuser",
+  "remote_filename": "abuser.csv",
+  "remote_version": "2026-02-03",
+  "ip_address": "192.168.1.1",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0",
+  "downloaded_at": 1706918150000,
+  "hour_bucket": 1706914800000,
+  "day_bucket": 1706832000000,
+  "month_bucket": 202402
+}
+```
 
 ### Analytics: Time Series
 
@@ -432,6 +462,7 @@ Returns download counts over time, grouped by hour, day, or month.
 | `remote_path` | string | No | Filter by remote path |
 | `remote_filename` | string | No | Filter by remote filename |
 | `remote_version` | string | No | Filter by remote version |
+| `limit` | integer | No | Max files per bucket (default: 100, max: 1000) |
 
 **Example Request:**
 
@@ -485,6 +516,12 @@ Returns aggregate statistics for a time period.
 
 **Query Parameters:** Same as Time Series (`start`, `end`, file filters).
 
+**Example Request:**
+
+```bash
+curl "https://r2index.acme.com/analytics/summary?start=1704067200000&end=1706745600000"
+```
+
 **Response:**
 
 ```json
@@ -517,6 +554,12 @@ Returns downloads for a specific IP address.
 | `limit` | integer | No | Max results (default: 100, max: 1000) |
 | `offset` | integer | No | Pagination offset |
 
+**Example Request:**
+
+```bash
+curl "https://r2index.acme.com/analytics/by-ip?ip=192.168.1.1&start=1704067200000&end=1706745600000"
+```
+
 **Response:**
 
 ```json
@@ -544,6 +587,12 @@ Returns download statistics grouped by user agent.
 
 **Query Parameters:** Same as Time Series, plus `limit` (default: 20, max: 100).
 
+**Example Request:**
+
+```bash
+curl "https://r2index.acme.com/analytics/user-agents?start=1704067200000&end=1706745600000&limit=10"
+```
+
 **Response:**
 
 ```json
@@ -561,7 +610,14 @@ Returns download statistics grouped by user agent.
 POST /maintenance/cleanup-downloads
 ```
 
-Deletes download records older than `DOWNLOADS_RETENTION_DAYS` (default: 365 days).
+Deletes download records older than `DOWNLOADS_RETENTION_DAYS` (default: 365 days). Call this endpoint periodically (e.g., daily via cron or Cloudflare Cron Triggers) to keep the database size manageable.
+
+**Example Request:**
+
+```bash
+curl -X POST "https://r2index.acme.com/maintenance/cleanup-downloads" \
+  -H "Authorization: Bearer <token>"
+```
 
 **Response:**
 
@@ -570,6 +626,27 @@ Deletes download records older than `DOWNLOADS_RETENTION_DAYS` (default: 365 day
   "deleted": 1234,
   "retention_days": 365
 }
+```
+
+**Cloudflare Cron Trigger Example:**
+
+Add to `wrangler.toml`:
+
+```toml
+[triggers]
+crons = ["0 2 * * *"]  # Run daily at 2 AM UTC
+```
+
+Then handle the scheduled event in your worker:
+
+```typescript
+export default {
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    const deleted = await cleanupOldDownloads(env.DB, parseInt(env.DOWNLOADS_RETENTION_DAYS || '365', 10));
+    console.log(`Cleanup: deleted ${deleted} old download records`);
+  },
+  // ... fetch handler
+};
 ```
 
 ## Database Schema

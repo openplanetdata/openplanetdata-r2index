@@ -652,6 +652,78 @@ describe('Analytics by-ip - edge cases', () => {
   });
 });
 
+describe('Analytics - files limit', () => {
+  beforeEach(async () => {
+    await env.DB.prepare('DELETE FROM file_downloads').run();
+
+    // Create downloads for many files
+    for (let i = 0; i < 10; i++) {
+      // Each file gets a different number of downloads (10-i)
+      for (let j = 0; j < 10 - i; j++) {
+        await SELF.fetch('http://localhost/downloads', {
+          method: 'POST',
+          headers: createAuthHeaders(),
+          body: JSON.stringify({
+            ...validDownloadInput,
+            remote_filename: `file${i}.pdf`,
+            ip_address: `192.168.${i}.${j}`,
+          }),
+        });
+      }
+    }
+  });
+
+  it('limits files per bucket with limit parameter', async () => {
+    const now = Date.now();
+    const response = await SELF.fetch(
+      `http://localhost/analytics/timeseries?start=${now - 86400000}&end=${now + 86400000}&scale=day&limit=3`,
+      { headers: createAuthHeaders() }
+    );
+    const data = await response.json() as { data: { files: unknown[]; total_downloads: number }[] };
+
+    // Should only return 3 files per bucket
+    expect(data.data[0].files.length).toBe(3);
+    // But total_downloads should still count all downloads
+    expect(data.data[0].total_downloads).toBe(55); // Sum of 10+9+8+...+1 = 55
+  });
+
+  it('returns files ordered by downloads descending', async () => {
+    const now = Date.now();
+    const response = await SELF.fetch(
+      `http://localhost/analytics/timeseries?start=${now - 86400000}&end=${now + 86400000}&scale=day&limit=5`,
+      { headers: createAuthHeaders() }
+    );
+    const data = await response.json() as { data: { files: { downloads: number }[] }[] };
+
+    const files = data.data[0].files;
+    for (let i = 0; i < files.length - 1; i++) {
+      expect(files[i].downloads).toBeGreaterThanOrEqual(files[i + 1].downloads);
+    }
+  });
+
+  it('defaults to 100 files limit', async () => {
+    const now = Date.now();
+    const response = await SELF.fetch(
+      `http://localhost/analytics/timeseries?start=${now - 86400000}&end=${now + 86400000}&scale=day`,
+      { headers: createAuthHeaders() }
+    );
+    const data = await response.json() as { data: { files: unknown[] }[] };
+
+    // With only 10 files, all should be returned
+    expect(data.data[0].files.length).toBe(10);
+  });
+
+  it('enforces max limit of 1000', async () => {
+    const now = Date.now();
+    const response = await SELF.fetch(
+      `http://localhost/analytics/timeseries?start=${now - 86400000}&end=${now + 86400000}&scale=day&limit=2000`,
+      { headers: createAuthHeaders() }
+    );
+    // Request should succeed (limit capped at 1000)
+    expect(response.status).toBe(200);
+  });
+});
+
 describe('POST /maintenance/cleanup-downloads', () => {
   beforeEach(async () => {
     await env.DB.prepare('DELETE FROM file_downloads').run();

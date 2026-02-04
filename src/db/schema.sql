@@ -50,8 +50,15 @@ CREATE TABLE IF NOT EXISTS file_downloads (
     month_bucket INTEGER NOT NULL
 );
 
+-- Time bucket indexes for range queries
 CREATE INDEX IF NOT EXISTS idx_downloads_hour ON file_downloads(hour_bucket);
 CREATE INDEX IF NOT EXISTS idx_downloads_day ON file_downloads(day_bucket);
 CREATE INDEX IF NOT EXISTS idx_downloads_month ON file_downloads(month_bucket);
-CREATE INDEX IF NOT EXISTS idx_downloads_file_day ON file_downloads(remote_path, remote_filename, remote_version, day_bucket);
+
+-- Composite indexes for GROUP BY patterns (bucket first for range scan, then grouping columns)
+CREATE INDEX IF NOT EXISTS idx_downloads_day_file ON file_downloads(day_bucket, remote_path, remote_filename, remote_version);
+CREATE INDEX IF NOT EXISTS idx_downloads_hour_file ON file_downloads(hour_bucket, remote_path, remote_filename, remote_version);
+CREATE INDEX IF NOT EXISTS idx_downloads_month_file ON file_downloads(month_bucket, remote_path, remote_filename, remote_version);
+
+-- IP search index
 CREATE INDEX IF NOT EXISTS idx_downloads_ip_day ON file_downloads(ip_address, day_bucket);

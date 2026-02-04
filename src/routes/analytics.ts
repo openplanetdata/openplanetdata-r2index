@@ -33,13 +33,15 @@ app.get('/timeseries', async (c) => {
     return c.json(validationError(parsed.error.flatten().fieldErrors), 400);
   }
 
-  const { start, end, scale, remote_path, remote_filename, remote_version } = parsed.data;
+  const { start, end, scale, remote_path, remote_filename, remote_version, limit } = parsed.data;
+  const filesLimit = Math.min(parseInt(limit || '100', 10), 1000);
   const data = await getTimeSeries(
     c.env.DB,
     parseInt(start, 10),
     parseInt(end, 10),
     (scale || 'day') as AnalyticsScale,
-    { remote_path, remote_filename, remote_version }
+    { remote_path, remote_filename, remote_version },
+    filesLimit
   );
 
   c.header('Cache-Control', `public, max-age=${getCacheMaxAge(c)}`);

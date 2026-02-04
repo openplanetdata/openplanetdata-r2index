@@ -112,7 +112,8 @@ export async function getTimeSeries(
   start: number,
   end: number,
   scale: AnalyticsScale,
-  filter: FileFilter
+  filter: FileFilter,
+  filesLimit: number = 100
 ): Promise<TimeSeriesBucket[]> {
   const bucketCol = getBucketColumn(scale);
   const { conditions, values } = buildFileConditions(filter);
@@ -167,7 +168,7 @@ export async function getTimeSeries(
     unique_downloads: number;
   }>();
 
-  // Group results by bucket
+  // Group results by bucket (already sorted by downloads DESC within each bucket)
   const bucketMap = new Map<number, { files: FileDownloadStats[]; total: number; unique: number }>();
 
   for (const row of result.results) {
@@ -175,15 +176,18 @@ export async function getTimeSeries(
       bucketMap.set(row.bucket, { files: [], total: 0, unique: 0 });
     }
     const bucket = bucketMap.get(row.bucket)!;
-    bucket.files.push({
-      id: row.file_id,
-      remote_path: row.remote_path,
-      remote_filename: row.remote_filename,
-      remote_version: row.remote_version,
-      downloads: row.downloads,
-      unique_downloads: row.unique_downloads,
-    });
+    // Always count total downloads, but only keep top N files per bucket
     bucket.total += row.downloads;
+    if (bucket.files.length < filesLimit) {
+      bucket.files.push({
+        id: row.file_id,
+        remote_path: row.remote_path,
+        remote_filename: row.remote_filename,
+        remote_version: row.remote_version,
+        downloads: row.downloads,
+        unique_downloads: row.unique_downloads,
+      });
+    }
   }
 
   // Calculate unique downloads per bucket (need separate query since DISTINCT spans files)

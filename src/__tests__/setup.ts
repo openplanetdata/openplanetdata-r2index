@@ -53,7 +53,9 @@ export async function setupDatabase() {
     env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_hour ON file_downloads(hour_bucket)'),
     env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_day ON file_downloads(day_bucket)'),
     env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_month ON file_downloads(month_bucket)'),
-    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_file_day ON file_downloads(remote_path, remote_filename, remote_version, day_bucket)'),
+    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_day_file ON file_downloads(day_bucket, remote_path, remote_filename, remote_version)'),
+    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_hour_file ON file_downloads(hour_bucket, remote_path, remote_filename, remote_version)'),
+    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_month_file ON file_downloads(month_bucket, remote_path, remote_filename, remote_version)'),
     env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_ip_day ON file_downloads(ip_address, day_bucket)'),
   ]);
 }
