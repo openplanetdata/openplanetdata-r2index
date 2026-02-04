@@ -110,6 +110,9 @@ export const analyticsParamsSchema = z.object({
   ip: z.string().max(45).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
   offset: z.string().regex(/^\d+$/).optional(),
+}).refine(data => parseInt(data.start, 10) <= parseInt(data.end, 10), {
+  message: 'start must be less than or equal to end',
+  path: ['start'],
 });
 
 export type AnalyticsParamsInput = z.infer<typeof analyticsParamsSchema>;

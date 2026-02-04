@@ -396,4 +396,20 @@ describe('analyticsParamsSchema', () => {
     const result = analyticsParamsSchema.safeParse({ ...validParams, scale: 'year' });
     expect(result.success).toBe(false);
   });
+
+  it('rejects start greater than end', () => {
+    const result = analyticsParamsSchema.safeParse({
+      start: '1706745600000',
+      end: '1704067200000',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts start equal to end', () => {
+    const result = analyticsParamsSchema.safeParse({
+      start: '1704067200000',
+      end: '1704067200000',
+    });
+    expect(result.success).toBe(true);
+  });
 });
