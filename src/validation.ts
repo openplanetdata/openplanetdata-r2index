@@ -81,3 +81,35 @@ export const searchParamsSchema = z.object({
 });
 
 export type SearchParams = z.infer<typeof searchParamsSchema>;
+
+// ============================================================================
+// Download Tracking Schema
+// ============================================================================
+
+export const createDownloadSchema = z.object({
+  remote_path: z.string().min(1).max(500),
+  remote_filename: z.string().min(1).max(255),
+  remote_version: z.string().min(1).max(100),
+  ip_address: z.string().min(1).max(45), // IPv6 max length
+  user_agent: z.string().max(500).optional(),
+});
+
+export type CreateDownloadInput = z.infer<typeof createDownloadSchema>;
+
+// ============================================================================
+// Analytics Params Schema
+// ============================================================================
+
+export const analyticsParamsSchema = z.object({
+  start: z.string().regex(/^\d+$/),
+  end: z.string().regex(/^\d+$/),
+  scale: z.enum(['hour', 'day', 'month']).optional(),
+  remote_path: z.string().max(500).optional(),
+  remote_filename: z.string().max(255).optional(),
+  remote_version: z.string().max(100).optional(),
+  ip: z.string().max(45).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+});
+
+export type AnalyticsParamsInput = z.infer<typeof analyticsParamsSchema>;

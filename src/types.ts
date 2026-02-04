@@ -2,6 +2,7 @@ export interface Env {
   API_TOKEN: string;
   CACHE_MAX_AGE?: string;
   DB: D1Database;
+  DOWNLOADS_RETENTION_DAYS?: string; // Days to keep download records (default: no limit)
 }
 
 export interface Variables {
@@ -113,3 +114,69 @@ export interface FileIndexEntry {
 }
 
 export type NestedIndex = Record<string, Record<string, FileIndexEntry>>;
+
+// Downloads tracking
+export interface DownloadRecord {
+  id: string;
+  remote_path: string;
+  remote_filename: string;
+  remote_version: string;
+  ip_address: string;
+  user_agent: string | null;
+  downloaded_at: number;
+  hour_bucket: number;
+  day_bucket: number;
+  month_bucket: number;
+}
+
+export interface CreateDownloadInput {
+  remote_path: string;
+  remote_filename: string;
+  remote_version: string;
+  ip_address: string;
+  user_agent?: string;
+}
+
+export type AnalyticsScale = 'hour' | 'day' | 'month';
+
+export interface AnalyticsParams {
+  start: number;
+  end: number;
+  scale?: AnalyticsScale;
+  remote_path?: string;
+  remote_filename?: string;
+  remote_version?: string;
+  ip?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface TimeSeriesBucket {
+  bucket: number;
+  downloads: number;
+  unique_downloads: number;
+}
+
+export interface AnalyticsSummary {
+  total_downloads: number;
+  unique_downloads: number;
+  top_user_agents: { user_agent: string; downloads: number }[];
+  period: { start: number; end: number };
+}
+
+export interface DownloadsByIpResult {
+  downloads: {
+    remote_path: string;
+    remote_filename: string;
+    remote_version: string;
+    downloaded_at: number;
+    user_agent: string | null;
+  }[];
+  total: number;
+}
+
+export interface UserAgentStats {
+  user_agent: string;
+  downloads: number;
+  unique_ips: number;
+}

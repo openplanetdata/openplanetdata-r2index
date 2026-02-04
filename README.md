@@ -55,7 +55,7 @@ npm run deploy
 ```toml
 name = "r2-index"
 main = "src/index.ts"
-compatibility_date = "2026-02-01"
+compatibility_date = "2026-01-31"
 
 routes = [
   { pattern = "r2index.acme.com/*", zone_name = "acme.com" }
@@ -65,13 +65,19 @@ routes = [
 binding = "DB"
 database_name = "r2-index"
 database_id = "<your-database-id>"
+
+[vars]
+CACHE_MAX_AGE = "60"
+# DOWNLOADS_RETENTION_DAYS = "365"
 ```
 
 ### Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `API_TOKEN` | Bearer token for API authentication (set via `wrangler secret put`) |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `API_TOKEN` | Bearer token for API authentication (set via `wrangler secret put`) | Required |
+| `CACHE_MAX_AGE` | Cache-Control max-age in seconds | `60` |
+| `DOWNLOADS_RETENTION_DAYS` | Days to keep download records before cleanup | `365` |
 
 ## Data Model
 
@@ -79,8 +85,8 @@ database_id = "<your-database-id>"
 
 | Field | Description | Example |
 |-------|-------------|---------|
-| `category` | Product or service grouping | `ipregistry` |
-| `entity` | Specific dataset identifier | `ipregistry-abuser`, `ipregistry-geolocation` |
+| `category` | Product or service grouping | `acme` |
+| `entity` | Specific dataset identifier | `acme-abuser`, `acme-geolocation` |
 | `extension` | File format | `csv`, `csv.zip`, `mmdb` |
 | `media_type` | MIME type | `text/csv`, `application/zip` |
 | `name` | Human-readable name | `Abuser`, `Geolocation` |
@@ -91,7 +97,7 @@ The tuple `(remote_path, remote_filename, remote_version)` uniquely identifies a
 
 | Field | Description | Example |
 |-------|-------------|---------|
-| `remote_path` | Directory path in R2 | `ipregistry/abuser` |
+| `remote_path` | Directory path in R2 | `acme/abuser` |
 | `remote_filename` | File name in R2 | `abuser.csv` |
 | `remote_version` | Version identifier | `2026-02-03`, `v1.0.0` |
 
@@ -134,12 +140,12 @@ Creates or updates a file based on the unique constraint `(remote_path, remote_f
 
 ```json
 {
-  "category": "ipregistry",
-  "entity": "ipregistry-abuser",
+  "category": "acme",
+  "entity": "acme-abuser",
   "extension": "csv",
   "media_type": "text/csv",
   "name": "Abuser",
-  "remote_path": "ipregistry/abuser",
+  "remote_path": "acme/abuser",
   "remote_filename": "abuser.csv",
   "remote_version": "2026-02-03",
   "size": 5023465,
@@ -157,12 +163,12 @@ Creates or updates a file based on the unique constraint `(remote_path, remote_f
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `category` | string | Yes | Product or service grouping (e.g., `ipregistry`) |
+| `category` | string | Yes | Product or service grouping (e.g., `acme`) |
 | `checksum_md5` | string | No | MD5 hash |
 | `checksum_sha1` | string | No | SHA1 hash |
 | `checksum_sha256` | string | No | SHA256 hash |
 | `checksum_sha512` | string | No | SHA512 hash |
-| `entity` | string | Yes | Dataset identifier (e.g., `ipregistry-abuser`) |
+| `entity` | string | Yes | Dataset identifier (e.g., `acme-abuser`) |
 | `extension` | string | Yes | File format (e.g., `csv`, `mmdb`) |
 | `extra` | object | No | Arbitrary JSON (merged into nested index output) |
 | `media_type` | string | Yes | MIME type (e.g., `text/csv`) |
@@ -216,7 +222,7 @@ Removes file metadata from the index. Does **not** delete the actual file in R2.
 
 ```json
 {
-  "remote_path": "ipregistry/abuser",
+  "remote_path": "acme/abuser",
   "remote_filename": "abuser.csv",
   "remote_version": "2026-02-03"
 }
@@ -251,10 +257,10 @@ GET /files
 curl "https://r2index.acme.com/files"
 
 # Filter by category
-curl "https://r2index.acme.com/files?category=ipregistry"
+curl "https://r2index.acme.com/files?category=acme"
 
 # Filter by category and entity
-curl "https://r2index.acme.com/files?category=ipregistry&entity=ipregistry-abuser"
+curl "https://r2index.acme.com/files?category=acme&entity=acme-abuser"
 
 # Filter by extension
 curl "https://r2index.acme.com/files?extension=csv"
@@ -266,10 +272,10 @@ curl "https://r2index.acme.com/files?tags=ip,security"
 curl "https://r2index.acme.com/files?deprecated=false"
 
 # Combine filters with pagination
-curl "https://r2index.acme.com/files?category=ipregistry&extension=csv&limit=50&offset=0"
+curl "https://r2index.acme.com/files?category=acme&extension=csv&limit=50&offset=0"
 
 # Group by extension for a given category
-curl "https://r2index.acme.com/files?category=ipregistry&group_by=extension"
+curl "https://r2index.acme.com/files?category=acme&group_by=extension"
 ```
 
 **Grouped Response (when using `group_by`):**
@@ -293,11 +299,11 @@ curl "https://r2index.acme.com/files?category=ipregistry&group_by=extension"
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "name": "Abuser",
-      "category": "ipregistry",
-      "entity": "ipregistry-abuser",
+      "category": "acme",
+      "entity": "acme-abuser",
       "extension": "csv",
       "media_type": "text/csv",
-      "remote_path": "ipregistry/abuser",
+      "remote_path": "acme/abuser",
       "remote_filename": "abuser.csv",
       "remote_version": "2026-02-03",
       "metadata_path": null,
@@ -334,14 +340,14 @@ Returns files grouped by entity then by extension in a nested structure. Useful 
 **Example Request:**
 
 ```bash
-curl "https://r2index.acme.com/files/index?category=ipregistry"
+curl "https://r2index.acme.com/files/index?category=acme"
 ```
 
 **Response:**
 
 ```json
 {
-  "ipregistry-abuser": {
+  "acme-abuser": {
     "csv": {
       "checksums": {
         "md5": "21a165f3ddef92b90dccb0c1bb4e249f",
@@ -363,7 +369,7 @@ curl "https://r2index.acme.com/files/index?category=ipregistry"
       "last_updated": "2026-02-03T18:55:50.000Z"
     }
   },
-  "ipregistry-as": {
+  "acme-as": {
     "csv": {
       "checksums": {
         "md5": "8356651e9e7bfdbf94fa41c9911d9cdf"
@@ -377,6 +383,170 @@ curl "https://r2index.acme.com/files/index?category=ipregistry"
 ```
 
 Extra fields from the `extra` JSON column are merged into each entry.
+
+### Record Download
+
+```
+POST /downloads
+```
+
+Records a file download event for analytics tracking.
+
+**Request Body:**
+
+```json
+{
+  "remote_path": "acme/abuser",
+  "remote_filename": "abuser.csv",
+  "remote_version": "2026-02-03",
+  "ip_address": "192.168.1.1",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `remote_path` | string | Yes | Directory path in R2 |
+| `remote_filename` | string | Yes | File name in R2 |
+| `remote_version` | string | Yes | Version identifier |
+| `ip_address` | string | Yes | Client IP address (IPv4 or IPv6) |
+| `user_agent` | string | No | Client user agent string |
+
+**Response:** `201 Created` with download record including pre-computed time buckets.
+
+### Analytics: Time Series
+
+```
+GET /analytics/timeseries
+```
+
+Returns download counts over time, grouped by hour, day, or month.
+
+**Query Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `start` | integer | Yes | Start timestamp (ms) |
+| `end` | integer | Yes | End timestamp (ms) |
+| `scale` | string | No | Time bucket: `hour`, `day`, `month` (default: `day`) |
+| `remote_path` | string | No | Filter by remote path |
+| `remote_filename` | string | No | Filter by remote filename |
+| `remote_version` | string | No | Filter by remote version |
+
+**Example Request:**
+
+```bash
+curl "https://r2index.acme.com/analytics/timeseries?start=1704067200000&end=1706745600000&scale=day"
+```
+
+**Response:**
+
+```json
+{
+  "scale": "day",
+  "data": [
+    { "bucket": 1704067200000, "downloads": 150, "unique_downloads": 45 },
+    { "bucket": 1704153600000, "downloads": 200, "unique_downloads": 62 }
+  ]
+}
+```
+
+### Analytics: Summary
+
+```
+GET /analytics/summary
+```
+
+Returns aggregate statistics for a time period.
+
+**Query Parameters:** Same as Time Series (`start`, `end`, file filters).
+
+**Response:**
+
+```json
+{
+  "total_downloads": 1234,
+  "unique_downloads": 567,
+  "top_user_agents": [
+    { "user_agent": "Chrome/120", "downloads": 500 },
+    { "user_agent": "Safari/17", "downloads": 300 }
+  ],
+  "period": { "start": 1704067200000, "end": 1706745600000 }
+}
+```
+
+### Analytics: By IP
+
+```
+GET /analytics/by-ip
+```
+
+Returns downloads for a specific IP address.
+
+**Query Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `ip` | string | Yes | IP address to search |
+| `start` | integer | Yes | Start timestamp (ms) |
+| `end` | integer | Yes | End timestamp (ms) |
+| `limit` | integer | No | Max results (default: 100, max: 1000) |
+| `offset` | integer | No | Pagination offset |
+
+**Response:**
+
+```json
+{
+  "downloads": [
+    {
+      "remote_path": "acme/abuser",
+      "remote_filename": "abuser.csv",
+      "remote_version": "2026-02-03",
+      "downloaded_at": 1704067200000,
+      "user_agent": "Chrome/120"
+    }
+  ],
+  "total": 45
+}
+```
+
+### Analytics: User Agents
+
+```
+GET /analytics/user-agents
+```
+
+Returns download statistics grouped by user agent.
+
+**Query Parameters:** Same as Time Series, plus `limit` (default: 20, max: 100).
+
+**Response:**
+
+```json
+{
+  "data": [
+    { "user_agent": "Chrome/120", "downloads": 500, "unique_ips": 234 },
+    { "user_agent": "Safari/17", "downloads": 300, "unique_ips": 156 }
+  ]
+}
+```
+
+### Maintenance: Cleanup Downloads
+
+```
+POST /maintenance/cleanup-downloads
+```
+
+Deletes download records older than `DOWNLOADS_RETENTION_DAYS` (default: 365 days).
+
+**Response:**
+
+```json
+{
+  "deleted": 1234,
+  "retention_days": 365
+}
+```
 
 ## Database Schema
 
@@ -416,11 +586,34 @@ Extra fields from the `extra` JSON column are merged into each entry.
 
 **Primary Key:** `(file_id, tag)`
 
+### file_downloads
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | TEXT | Primary key (auto-generated UUID) |
+| `remote_path` | TEXT | Path in R2 bucket |
+| `remote_filename` | TEXT | Filename in R2 |
+| `remote_version` | TEXT | Version identifier |
+| `ip_address` | TEXT | Client IP address |
+| `user_agent` | TEXT | Client user agent |
+| `downloaded_at` | INTEGER | Download timestamp (ms) |
+| `hour_bucket` | INTEGER | Pre-computed hour bucket for fast aggregation |
+| `day_bucket` | INTEGER | Pre-computed day bucket for fast aggregation |
+| `month_bucket` | INTEGER | Pre-computed month bucket (YYYYMM format) |
+
+**Indexes:** `hour_bucket`, `day_bucket`, `month_bucket`, `(remote_path, remote_filename, remote_version, day_bucket)`, `(ip_address, day_bucket)`
+
 ## Development
 
 ```bash
 # Run locally
 npm run dev
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
 
 # Type check
 npx tsc --noEmit

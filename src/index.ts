@@ -4,6 +4,9 @@ import type { Env, Variables } from './types';
 import { authMiddleware } from './middleware/auth';
 import { requestIdMiddleware } from './middleware/request-id';
 import filesRoutes from './routes/files';
+import downloadsRoutes from './routes/downloads';
+import analyticsRoutes from './routes/analytics';
+import { cleanupOldDownloads } from './db/downloads';
 import { Errors } from './errors';
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -44,5 +47,19 @@ app.use('/*', authMiddleware);
 
 // Mount routes
 app.route('/files', filesRoutes);
+app.route('/downloads', downloadsRoutes);
+app.route('/analytics', analyticsRoutes);
+
+// Maintenance: cleanup old downloads (respects DOWNLOADS_RETENTION_DAYS, default 365)
+app.post('/maintenance/cleanup-downloads', async (c) => {
+  const retentionDays = parseInt(c.env.DOWNLOADS_RETENTION_DAYS || '365', 10);
+
+  if (retentionDays <= 0) {
+    return c.json({ error: 'DOWNLOADS_RETENTION_DAYS must be positive' }, 400);
+  }
+
+  const deleted = await cleanupOldDownloads(c.env.DB, retentionDays);
+  return c.json({ deleted, retention_days: retentionDays });
+});
 
 export default app;

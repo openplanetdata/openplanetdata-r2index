@@ -1,6 +1,6 @@
 name = "r2-index"
 main = "src/index.ts"
-compatibility_date = "2026-02-01"
+compatibility_date = "2026-01-31"
 
 routes = [
   { pattern = "r2index.acme.com/*", zone_name = "acme.com" }
@@ -15,3 +15,4 @@ database_id = "<to-be-created>"
 
 [vars]
 CACHE_MAX_AGE = "60"
+# DOWNLOADS_RETENTION_DAYS = "365"  # Days to keep download records (default: 365)
