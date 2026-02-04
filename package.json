@@ -5,15 +5,20 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "db:init": "wrangler d1 execute r2-index --file=src/db/schema.sql"
+    "db:init": "wrangler d1 execute r2-index --file=src/db/schema.sql",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "hono": "^4.7.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.12.9",
     "@cloudflare/workers-types": "^4.20260201.0",
+    "miniflare": "^4.20260131.0",
     "typescript": "^5.7.0",
+    "vitest": "^3.2.4",
     "wrangler": "^3.105.0"
   }
 }
