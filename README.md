@@ -1,6 +1,6 @@
 # R2 Index
 
-Cloudflare Worker API for managing a D1 metadata index for files stored in R2.
+A queryable metadata index for files stored in Cloudflare R2. Built as a Cloudflare Worker with D1 database, it enables searching, filtering, and organizing files by category, entity, tags, and custom metadata — without scanning the object store.
 
 ## Architecture
 
