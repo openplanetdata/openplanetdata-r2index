@@ -7,7 +7,7 @@ from typing import Any
 
 import httpx
 
-from .async_uploader import AsyncR2Uploader
+from .async_storage import AsyncR2Storage
 from .checksums import compute_checksums_async
 from .exceptions import (
     AuthenticationError,
@@ -32,7 +32,7 @@ from .models import (
     TimeseriesResponse,
     UserAgentsResponse,
 )
-from .uploader import R2Config, R2TransferConfig
+from .storage import R2Config, R2TransferConfig
 
 CHECKIP_URL = "https://checkip.amazonaws.com"
 DEFAULT_USER_AGENT = "elaunira-r2index/0.1.0"
@@ -96,7 +96,7 @@ class AsyncR2IndexClient:
         self._token = api_token
         self._timeout = timeout
         self._r2_config = r2_config
-        self._uploader: AsyncR2Uploader | None = None
+        self._uploader: AsyncR2Storage | None = None
 
         self._client = httpx.AsyncClient(
             base_url=self.api_url,
@@ -114,12 +114,12 @@ class AsyncR2IndexClient:
         """Close the HTTP client."""
         await self._client.aclose()
 
-    def _get_uploader(self) -> AsyncR2Uploader:
+    def _get_uploader(self) -> AsyncR2Storage:
         """Get or create the async R2 uploader."""
         if self._r2_config is None:
             raise R2IndexError("R2 configuration required for upload operations")
         if self._uploader is None:
-            self._uploader = AsyncR2Uploader(self._r2_config)
+            self._uploader = AsyncR2Storage(self._r2_config)
         return self._uploader
 
     def _handle_response(self, response: httpx.Response) -> Any:

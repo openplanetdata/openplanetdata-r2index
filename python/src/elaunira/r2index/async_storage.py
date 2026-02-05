@@ -1,4 +1,4 @@
-"""Asynchronous R2 uploader using aioboto3."""
+"""Asynchronous R2 storage operations using aioboto3."""
 
 from collections.abc import Callable
 from pathlib import Path
@@ -7,15 +7,15 @@ import aioboto3
 from aiobotocore.config import AioConfig
 
 from .exceptions import DownloadError, UploadError
-from .uploader import R2Config, R2TransferConfig
+from .storage import R2Config, R2TransferConfig
 
 
-class AsyncR2Uploader:
-    """Asynchronous R2 uploader using aioboto3."""
+class AsyncR2Storage:
+    """Asynchronous R2 storage client using aioboto3."""
 
     def __init__(self, config: R2Config) -> None:
         """
-        Initialize the async R2 uploader.
+        Initialize the async R2 storage client.
 
         Args:
             config: R2 configuration with credentials and endpoint.

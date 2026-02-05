@@ -11,7 +11,7 @@ from elaunira.r2index import (
     RemoteTuple,
 )
 from elaunira.r2index.client import _parse_object_id
-from elaunira.r2index.uploader import R2Config, R2TransferConfig
+from elaunira.r2index.storage import R2Config, R2TransferConfig
 
 
 class TestParseObjectId:

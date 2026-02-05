@@ -1,4 +1,4 @@
-"""Synchronous R2 uploader using boto3."""
+"""Synchronous R2 storage operations using boto3."""
 
 import os
 from collections.abc import Callable
@@ -49,12 +49,12 @@ class R2Config:
     region: str = "auto"
 
 
-class R2Uploader:
-    """Synchronous R2 uploader using boto3."""
+class R2Storage:
+    """Synchronous R2 storage client using boto3."""
 
     def __init__(self, config: R2Config) -> None:
         """
-        Initialize the R2 uploader.
+        Initialize the R2 storage client.
 
         Args:
             config: R2 configuration with credentials and endpoint.

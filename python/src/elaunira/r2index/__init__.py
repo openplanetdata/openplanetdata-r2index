@@ -1,7 +1,7 @@
 """Python library for uploading and downloading files to/from Cloudflare R2 with the r2index API."""
 
 from .async_client import AsyncR2IndexClient
-from .async_uploader import AsyncR2Uploader
+from .async_storage import AsyncR2Storage
 from .checksums import (
     ChecksumResult,
     compute_checksums,
@@ -37,17 +37,17 @@ from .models import (
     UserAgentEntry,
     UserAgentsResponse,
 )
-from .uploader import R2Config, R2TransferConfig, R2Uploader
+from .storage import R2Config, R2Storage, R2TransferConfig
 
 __all__ = [
     # Clients
     "AsyncR2IndexClient",
     "R2IndexClient",
-    # Uploaders
-    "AsyncR2Uploader",
+    # Storage
+    "AsyncR2Storage",
     "R2Config",
+    "R2Storage",
     "R2TransferConfig",
-    "R2Uploader",
     # Checksums
     "ChecksumResult",
     "compute_checksums",
