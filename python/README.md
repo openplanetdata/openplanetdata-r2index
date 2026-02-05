@@ -24,13 +24,13 @@ client = R2IndexClient(
 )
 
 # Upload and register a file
+# extension is auto-detected from destination_filename
+# media_type is auto-detected from file content
 record = client.upload(
     bucket="my-bucket",
     source="./myfile.zip",
     category="software",
     entity="myapp",
-    extension="zip",
-    media_type="application/zip",
     destination_path="/releases/myapp",
     destination_filename="myapp.zip",
     destination_version="v1",
@@ -62,14 +62,12 @@ async with AsyncR2IndexClient(
     r2_secret_access_key="your-r2-secret-access-key",
     r2_endpoint_url="https://your-account-id.r2.cloudflarestorage.com",
 ) as client:
-    # Upload
+    # Upload (extension and media_type are auto-detected)
     record = await client.upload(
         bucket="my-bucket",
         source="./myfile.zip",
         category="software",
         entity="myapp",
-        extension="zip",
-        media_type="application/zip",
         destination_path="/releases/myapp",
         destination_filename="myapp.zip",
         destination_version="v1",
@@ -115,8 +113,6 @@ record = client.upload(
     source="./largefile.zip",
     category="data",
     entity="archive",
-    extension="zip",
-    media_type="application/zip",
     destination_path="/data/files",
     destination_filename="largefile.zip",
     destination_version="v1",

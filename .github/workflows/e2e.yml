@@ -1,0 +1,41 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_r2:
+        description: 'Run R2 storage tests'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  e2e:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    if: ${{ vars.E2E_API_URL != '' }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: python
+        run: pip install -e .
+
+      - name: Run E2E tests
+        env:
+          E2E_API_URL: ${{ vars.E2E_API_URL }}
+          E2E_API_TOKEN: ${{ secrets.E2E_API_TOKEN }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+        run: |
+          if [ "${{ inputs.test_r2 }}" = "true" ] && [ -n "$R2_ACCESS_KEY_ID" ]; then
+            python e2e_test.py "$E2E_API_URL" "$E2E_API_TOKEN" "$R2_ACCESS_KEY_ID" "$R2_SECRET_ACCESS_KEY" "$R2_ACCOUNT_ID"
+          else
+            python e2e_test.py "$E2E_API_URL" "$E2E_API_TOKEN"
+          fi

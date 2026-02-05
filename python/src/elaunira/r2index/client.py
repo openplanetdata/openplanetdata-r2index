@@ -1,12 +1,15 @@
 """Synchronous R2Index API client."""
 
+import contextlib
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import filetype
 import httpx
 
+from . import __version__ as _version
 from .checksums import compute_checksums
 from .exceptions import (
     AuthenticationError,
@@ -31,7 +34,6 @@ from .models import (
     TimeseriesResponse,
     UserAgentsResponse,
 )
-from . import __version__ as _version
 from .storage import R2Config, R2Storage, R2TransferConfig
 
 CHECKIP_URL = "https://checkip.amazonaws.com"
@@ -535,11 +537,11 @@ class R2IndexClient:
         source: str | Path,
         category: str,
         entity: str,
-        extension: str,
-        media_type: str,
         destination_path: str,
         destination_filename: str,
         destination_version: str,
+        extension: str | None = None,
+        media_type: str | None = None,
         name: str | None = None,
         tags: list[str] | None = None,
         extra: dict[str, Any] | None = None,
@@ -562,11 +564,13 @@ class R2IndexClient:
             source: Local path to the file to upload.
             category: File category.
             entity: File entity.
-            extension: File extension (e.g., "zip", "tar.gz").
-            media_type: MIME type (e.g., "application/zip").
             destination_path: Path in R2 (e.g., "/data/files").
             destination_filename: Filename in R2.
             destination_version: Version identifier.
+            extension: File extension (e.g., "zip", "tar.gz"). If not provided,
+                extracted from destination_filename.
+            media_type: MIME type (e.g., "application/zip"). If not provided,
+                detected from file content.
             name: Optional display name.
             tags: Optional list of tags.
             extra: Optional extra metadata.
@@ -582,9 +586,24 @@ class R2IndexClient:
         Raises:
             R2IndexError: If R2 config is not provided.
             UploadError: If upload fails.
+            ValueError: If extension cannot be determined from filename.
         """
         source_path = Path(source)
         storage = self._get_storage()
+
+        # Auto-detect extension from destination_filename if not provided
+        if extension is None:
+            if "." in destination_filename:
+                extension = destination_filename.rsplit(".", 1)[1]
+            else:
+                raise ValueError(
+                    f"Cannot determine extension from filename: {destination_filename}"
+                )
+
+        # Auto-detect media_type from file content if not provided
+        if media_type is None:
+            kind = filetype.guess(source_path)
+            media_type = kind.mime if kind is not None else "application/octet-stream"
 
         # Step 1: Compute checksums
         checksums = compute_checksums(source_path)
@@ -613,7 +632,7 @@ class R2IndexClient:
             for ext, value in checksum_files:
                 checksum_key = f"{object_key}.{ext}"
                 storage.upload_bytes(
-                    f"{value}  {destination_filename}\n".encode("utf-8"),
+                    f"{value}  {destination_filename}\n".encode(),
                     bucket,
                     checksum_key,
                     content_type="text/plain",
@@ -772,8 +791,5 @@ class R2IndexClient:
         if delete_checksum_files:
             for ext in ["md5", "sha1", "sha256", "sha512"]:
                 checksum_key = f"{object_key}.{ext}"
-                try:
+                with contextlib.suppress(Exception):
                     storage.delete_object(bucket, checksum_key)
-                except Exception:
-                    # Ignore errors - checksum file may not exist
-                    pass
