@@ -75,9 +75,9 @@ CACHE_MAX_AGE = "60"
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `R2INDEX_API_TOKEN` | Bearer token for API authentication (set via `wrangler secret put`) | Required |
 | `CACHE_MAX_AGE` | Cache-Control max-age in seconds | `60` |
 | `DOWNLOADS_RETENTION_DAYS` | Days to keep download records before cleanup | `365` |
+| `R2INDEX_API_TOKEN` | Bearer token for API authentication (set via `wrangler secret put`) | Required |
 
 ## Data Model
 
@@ -106,16 +106,16 @@ The tuple `(bucket, remote_path, remote_filename, remote_version)` uniquely iden
 
 | Field | Description |
 |-------|-------------|
-| `size` | File size in bytes |
-| `metadata_path` | Path to associated metadata file |
 | `checksum_md5` | MD5 hash |
 | `checksum_sha1` | SHA1 hash |
 | `checksum_sha256` | SHA256 hash |
 | `checksum_sha512` | SHA512 hash |
-| `extra` | Arbitrary JSON (e.g., `header_line`, `line_count`) |
-| `tags` | Array of tags for filtering |
 | `deprecated` | Boolean flag |
 | `deprecation_reason` | Reason for deprecation |
+| `extra` | Arbitrary JSON (e.g., `header_line`, `line_count`) |
+| `metadata_path` | Path to associated metadata file |
+| `size` | File size in bytes |
+| `tags` | Array of tags for filtering |
 
 ## API Reference
 
@@ -414,10 +414,10 @@ Records a file download event for analytics tracking.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `bucket` | string | Yes | S3/R2 bucket name |
-| `remote_path` | string | Yes | Directory path in R2 |
-| `remote_filename` | string | Yes | File name in R2 |
-| `remote_version` | string | Yes | Version identifier |
 | `ip_address` | string | Yes | Client IP address (IPv4 or IPv6) |
+| `remote_filename` | string | Yes | File name in R2 |
+| `remote_path` | string | Yes | Directory path in R2 |
+| `remote_version` | string | Yes | Version identifier |
 | `user_agent` | string | No | Client user agent string |
 
 **Example Request:**
@@ -466,14 +466,14 @@ Returns download counts over time, grouped by hour, day, or month.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `start` | integer | Yes | Start timestamp (ms) |
-| `end` | integer | Yes | End timestamp (ms) |
-| `scale` | string | No | Time bucket: `hour`, `day`, `month` (default: `day`) |
 | `bucket` | string | No | Filter by bucket |
-| `remote_path` | string | No | Filter by remote path |
-| `remote_filename` | string | No | Filter by remote filename |
-| `remote_version` | string | No | Filter by remote version |
+| `end` | integer | Yes | End timestamp (ms) |
 | `limit` | integer | No | Max files per bucket (default: 100, max: 1000) |
+| `remote_filename` | string | No | Filter by remote filename |
+| `remote_path` | string | No | Filter by remote path |
+| `remote_version` | string | No | Filter by remote version |
+| `scale` | string | No | Time bucket: `hour`, `day`, `month` (default: `day`) |
+| `start` | integer | Yes | Start timestamp (ms) |
 
 **Example Request:**
 
@@ -561,11 +561,11 @@ Returns downloads for a specific IP address.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `ip` | string | Yes | IP address to search |
-| `start` | integer | Yes | Start timestamp (ms) |
 | `end` | integer | Yes | End timestamp (ms) |
+| `ip` | string | Yes | IP address to search |
 | `limit` | integer | No | Max results (default: 100, max: 1000) |
 | `offset` | integer | No | Pagination offset |
+| `start` | integer | Yes | Start timestamp (ms) |
 
 **Example Request:**
 
@@ -706,19 +706,19 @@ export default {
 
 | Column | Type | Description |
 |--------|------|-------------|
-| `id` | TEXT | Primary key (auto-generated UUID) |
 | `bucket` | TEXT | S3/R2 bucket name |
-| `remote_path` | TEXT | Path in R2 bucket |
-| `remote_filename` | TEXT | Filename in R2 |
-| `remote_version` | TEXT | Version identifier |
-| `ip_address` | TEXT | Client IP address |
-| `user_agent` | TEXT | Client user agent |
+| `day_bucket` | INTEGER | Pre-computed day bucket for fast aggregation |
 | `downloaded_at` | INTEGER | Download timestamp (ms) |
 | `hour_bucket` | INTEGER | Pre-computed hour bucket for fast aggregation |
-| `day_bucket` | INTEGER | Pre-computed day bucket for fast aggregation |
+| `id` | TEXT | Primary key (auto-generated UUID) |
+| `ip_address` | TEXT | Client IP address |
 | `month_bucket` | INTEGER | Pre-computed month bucket (YYYYMM format) |
+| `remote_filename` | TEXT | Filename in R2 |
+| `remote_path` | TEXT | Path in R2 bucket |
+| `remote_version` | TEXT | Version identifier |
+| `user_agent` | TEXT | Client user agent |
 
-**Indexes:** `hour_bucket`, `day_bucket`, `month_bucket`, `(bucket, remote_path, remote_filename, remote_version, day_bucket)`, `(ip_address, day_bucket)`
+**Indexes:** `day_bucket`, `hour_bucket`, `month_bucket`, `(bucket, remote_path, remote_filename, remote_version, day_bucket)`, `(ip_address, day_bucket)`
 
 ## Development
 
