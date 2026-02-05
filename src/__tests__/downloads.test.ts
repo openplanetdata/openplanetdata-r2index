@@ -24,7 +24,7 @@ beforeAll(async () => {
 
 describe('POST /downloads - Record download', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
   });
 
   it('records a download with all fields', async () => {
@@ -101,7 +101,7 @@ describe('POST /downloads - Record download', () => {
 
 describe('GET /analytics/timeseries', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
 
     // Create test downloads
     for (let i = 0; i < 5; i++) {
@@ -188,7 +188,7 @@ describe('GET /analytics/timeseries', () => {
 
 describe('GET /analytics/summary', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
 
     for (let i = 0; i < 3; i++) {
       await SELF.fetch('http://localhost/downloads', {
@@ -226,7 +226,7 @@ describe('GET /analytics/summary', () => {
 
 describe('GET /analytics/by-ip', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
 
     for (let i = 0; i < 3; i++) {
       await SELF.fetch('http://localhost/downloads', {
@@ -275,7 +275,7 @@ describe('GET /analytics/by-ip', () => {
 
 describe('GET /analytics/user-agents', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
 
     const userAgents = ['Chrome/120', 'Chrome/120', 'Safari/17', 'Firefox/121'];
     for (let i = 0; i < userAgents.length; i++) {
@@ -335,9 +335,9 @@ describe('GET /analytics/user-agents', () => {
 
 describe('Analytics - file id inclusion', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
-    await env.DB.prepare('DELETE FROM file_tags').run();
-    await env.DB.prepare('DELETE FROM files').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_tags').run();
+    await env.D1.prepare('DELETE FROM files').run();
   });
 
   it('includes file id when file exists in index', async () => {
@@ -395,7 +395,7 @@ describe('Analytics - file id inclusion', () => {
 
 describe('Analytics - multiple files', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
 
     // Create downloads for multiple files
     const files = [
@@ -459,7 +459,7 @@ describe('Analytics - multiple files', () => {
 
 describe('Analytics - time scales', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
 
     await SELF.fetch('http://localhost/downloads', {
       method: 'POST',
@@ -538,7 +538,7 @@ describe('Analytics - validation', () => {
   });
 
   it('returns empty data for time range with no downloads', async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
 
     const response = await SELF.fetch(
       'http://localhost/analytics/timeseries?start=1704067200000&end=1706745600000&scale=day',
@@ -552,7 +552,7 @@ describe('Analytics - validation', () => {
 
 describe('Analytics summary - filters', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
 
     // Downloads for file1
     for (let i = 0; i < 3; i++) {
@@ -597,7 +597,7 @@ describe('Analytics summary - filters', () => {
 
 describe('Analytics by-ip - edge cases', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
   });
 
   it('returns empty for IP with no downloads', async () => {
@@ -656,7 +656,7 @@ describe('Analytics by-ip - edge cases', () => {
 
 describe('Analytics - files limit', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
 
     // Create downloads for many files
     for (let i = 0; i < 10; i++) {
@@ -728,7 +728,7 @@ describe('Analytics - files limit', () => {
 
 describe('POST /maintenance/cleanup-downloads', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_downloads').run();
+    await env.D1.prepare('DELETE FROM file_downloads').run();
   });
 
   it('deletes old downloads based on retention days', async () => {
@@ -740,7 +740,7 @@ describe('POST /maintenance/cleanup-downloads', () => {
       month_bucket: new Date(oldTimestamp).getUTCFullYear() * 100 + (new Date(oldTimestamp).getUTCMonth() + 1),
     };
 
-    await env.DB.prepare(`
+    await env.D1.prepare(`
       INSERT INTO file_downloads (id, bucket, remote_path, remote_filename, remote_version, ip_address, user_agent, downloaded_at, hour_bucket, day_bucket, month_bucket)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
@@ -765,7 +765,7 @@ describe('POST /maintenance/cleanup-downloads', () => {
     });
 
     // Verify we have 2 downloads
-    const countBefore = await env.DB.prepare('SELECT COUNT(*) as count FROM file_downloads').first<{ count: number }>();
+    const countBefore = await env.D1.prepare('SELECT COUNT(*) as count FROM file_downloads').first<{ count: number }>();
     expect(countBefore?.count).toBe(2);
 
     // Run cleanup (default 365 days retention)
@@ -780,7 +780,7 @@ describe('POST /maintenance/cleanup-downloads', () => {
     expect(data.retention_days).toBe(365);
 
     // Verify only 1 download remains
-    const countAfter = await env.DB.prepare('SELECT COUNT(*) as count FROM file_downloads').first<{ count: number }>();
+    const countAfter = await env.D1.prepare('SELECT COUNT(*) as count FROM file_downloads').first<{ count: number }>();
     expect(countAfter?.count).toBe(1);
   });
 

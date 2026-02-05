@@ -2,8 +2,8 @@ import { env } from 'cloudflare:test';
 
 export async function setupDatabase() {
   // Initialize database schema using batch
-  await env.DB.batch([
-    env.DB.prepare(`
+  await env.D1.batch([
+    env.D1.prepare(`
       CREATE TABLE IF NOT EXISTS files (
         id TEXT PRIMARY KEY,
         name TEXT,
@@ -28,7 +28,7 @@ export async function setupDatabase() {
         updated INTEGER NOT NULL
       )
     `),
-    env.DB.prepare(`
+    env.D1.prepare(`
       CREATE TABLE IF NOT EXISTS file_tags (
         file_id TEXT NOT NULL,
         tag TEXT NOT NULL,
@@ -36,9 +36,9 @@ export async function setupDatabase() {
         FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
       )
     `),
-    env.DB.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_files_remote_unique ON files(bucket, remote_path, remote_filename, remote_version)'),
-    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_files_bucket ON files(bucket)'),
-    env.DB.prepare(`
+    env.D1.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_files_remote_unique ON files(bucket, remote_path, remote_filename, remote_version)'),
+    env.D1.prepare('CREATE INDEX IF NOT EXISTS idx_files_bucket ON files(bucket)'),
+    env.D1.prepare(`
       CREATE TABLE IF NOT EXISTS file_downloads (
         id TEXT PRIMARY KEY,
         bucket TEXT NOT NULL,
@@ -53,12 +53,12 @@ export async function setupDatabase() {
         month_bucket INTEGER NOT NULL
       )
     `),
-    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_hour ON file_downloads(hour_bucket)'),
-    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_day ON file_downloads(day_bucket)'),
-    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_month ON file_downloads(month_bucket)'),
-    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_day_file ON file_downloads(day_bucket, bucket, remote_path, remote_filename, remote_version)'),
-    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_hour_file ON file_downloads(hour_bucket, bucket, remote_path, remote_filename, remote_version)'),
-    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_month_file ON file_downloads(month_bucket, bucket, remote_path, remote_filename, remote_version)'),
-    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_ip_day ON file_downloads(ip_address, day_bucket)'),
+    env.D1.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_hour ON file_downloads(hour_bucket)'),
+    env.D1.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_day ON file_downloads(day_bucket)'),
+    env.D1.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_month ON file_downloads(month_bucket)'),
+    env.D1.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_day_file ON file_downloads(day_bucket, bucket, remote_path, remote_filename, remote_version)'),
+    env.D1.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_hour_file ON file_downloads(hour_bucket, bucket, remote_path, remote_filename, remote_version)'),
+    env.D1.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_month_file ON file_downloads(month_bucket, bucket, remote_path, remote_filename, remote_version)'),
+    env.D1.prepare('CREATE INDEX IF NOT EXISTS idx_downloads_ip_day ON file_downloads(ip_address, day_bucket)'),
   ]);
 }

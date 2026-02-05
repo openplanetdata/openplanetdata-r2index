@@ -37,7 +37,7 @@ app.get('/timeseries', async (c) => {
   const { start, end, scale, bucket, remote_path, remote_filename, remote_version, limit } = parsed.data;
   const filesLimit = Math.min(parseInt(limit || '100', 10), 1000);
   const data = await getTimeSeries(
-    c.env.DB,
+    c.env.D1,
     parseInt(start, 10),
     parseInt(end, 10),
     (scale || 'day') as AnalyticsScale,
@@ -60,7 +60,7 @@ app.get('/summary', async (c) => {
 
   const { start, end, bucket, remote_path, remote_filename, remote_version } = parsed.data;
   const summary = await getSummary(
-    c.env.DB,
+    c.env.D1,
     parseInt(start, 10),
     parseInt(end, 10),
     { bucket, remote_path, remote_filename, remote_version }
@@ -86,7 +86,7 @@ app.get('/by-ip', async (c) => {
   }
 
   const result = await getDownloadsByIp(
-    c.env.DB,
+    c.env.D1,
     ip,
     parseInt(start, 10),
     parseInt(end, 10),
@@ -109,7 +109,7 @@ app.get('/user-agents', async (c) => {
 
   const { start, end, bucket, remote_path, remote_filename, remote_version, limit } = parsed.data;
   const data = await getUserAgentStats(
-    c.env.DB,
+    c.env.D1,
     parseInt(start, 10),
     parseInt(end, 10),
     { bucket, remote_path, remote_filename, remote_version },

@@ -15,7 +15,7 @@ app.post('/', async (c) => {
     return c.json(validationError(parsed.error.flatten().fieldErrors), 400);
   }
 
-  const download = await createDownload(c.env.DB, parsed.data);
+  const download = await createDownload(c.env.D1, parsed.data);
   return c.json(download, 201);
 });
 

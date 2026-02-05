@@ -55,7 +55,7 @@ app.get('/', async (c) => {
   }
 
   try {
-    const result = await searchFiles(c.env.DB, parsed.data);
+    const result = await searchFiles(c.env.D1, parsed.data);
     c.header('Cache-Control', `public, max-age=${getCacheMaxAge(c)}`);
     return c.json(result);
   } catch (e) {
@@ -75,14 +75,14 @@ app.post('/', async (c) => {
     return c.json(validationError(parsed.error.flatten().fieldErrors), 400);
   }
 
-  const { file, created } = await upsertFile(c.env.DB, parsed.data);
+  const { file, created } = await upsertFile(c.env.D1, parsed.data);
   return c.json(file, created ? 201 : 200);
 });
 
 // Get nested index (grouped by entity then extension)
 app.get('/index', async (c) => {
   const params = getFilterParams(c);
-  const index = await getNestedIndex(c.env.DB, params);
+  const index = await getNestedIndex(c.env.D1, params);
 
   c.header('Cache-Control', `public, max-age=${getCacheMaxAge(c)}`);
   return c.json(index);
@@ -90,7 +90,7 @@ app.get('/index', async (c) => {
 
 // Get file by ID
 app.get('/:id', async (c) => {
-  const file = await getFileById(c.env.DB, c.req.param('id'));
+  const file = await getFileById(c.env.D1, c.req.param('id'));
 
   if (!file) {
     return c.json(Errors.FILE_NOT_FOUND, 404);
@@ -109,7 +109,7 @@ app.put('/:id', async (c) => {
   }
 
   try {
-    const file = await updateFile(c.env.DB, c.req.param('id'), parsed.data);
+    const file = await updateFile(c.env.D1, c.req.param('id'), parsed.data);
 
     if (!file) {
       return c.json(Errors.FILE_NOT_FOUND, 404);
@@ -126,7 +126,7 @@ app.put('/:id', async (c) => {
 
 // Delete file metadata by ID
 app.delete('/:id', async (c) => {
-  const deleted = await deleteFile(c.env.DB, c.req.param('id'));
+  const deleted = await deleteFile(c.env.D1, c.req.param('id'));
 
   if (!deleted) {
     return c.json(Errors.FILE_NOT_FOUND, 404);
@@ -145,7 +145,7 @@ app.delete('/', async (c) => {
   }
 
   const deleted = await deleteFileByRemote(
-    c.env.DB,
+    c.env.D1,
     parsed.data.bucket,
     parsed.data.remote_path,
     parsed.data.remote_filename,

@@ -94,8 +94,8 @@ describe('404 handling', () => {
 describe('POST /files - Create file', () => {
   beforeEach(async () => {
     // Clean up database
-    await env.DB.prepare('DELETE FROM file_tags').run();
-    await env.DB.prepare('DELETE FROM files').run();
+    await env.D1.prepare('DELETE FROM file_tags').run();
+    await env.D1.prepare('DELETE FROM files').run();
   });
 
   it('creates a file with minimal input', async () => {
@@ -187,8 +187,8 @@ describe('POST /files - Create file', () => {
 
 describe('GET /files - Search files', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_tags').run();
-    await env.DB.prepare('DELETE FROM files').run();
+    await env.D1.prepare('DELETE FROM file_tags').run();
+    await env.D1.prepare('DELETE FROM files').run();
 
     // Create test files
     const files = [
@@ -288,8 +288,8 @@ describe('GET /files/:id - Get file by ID', () => {
   let fileId: string;
 
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_tags').run();
-    await env.DB.prepare('DELETE FROM files').run();
+    await env.D1.prepare('DELETE FROM file_tags').run();
+    await env.D1.prepare('DELETE FROM files').run();
 
     const response = await SELF.fetch('http://localhost/files', {
       method: 'POST',
@@ -325,8 +325,8 @@ describe('PUT /files/:id - Update file', () => {
   let fileId: string;
 
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_tags').run();
-    await env.DB.prepare('DELETE FROM files').run();
+    await env.D1.prepare('DELETE FROM file_tags').run();
+    await env.D1.prepare('DELETE FROM files').run();
 
     const response = await SELF.fetch('http://localhost/files', {
       method: 'POST',
@@ -421,8 +421,8 @@ describe('DELETE /files/:id - Delete file by ID', () => {
   let fileId: string;
 
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_tags').run();
-    await env.DB.prepare('DELETE FROM files').run();
+    await env.D1.prepare('DELETE FROM file_tags').run();
+    await env.D1.prepare('DELETE FROM files').run();
 
     const response = await SELF.fetch('http://localhost/files', {
       method: 'POST',
@@ -460,8 +460,8 @@ describe('DELETE /files/:id - Delete file by ID', () => {
 
 describe('DELETE /files - Delete file by remote tuple', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_tags').run();
-    await env.DB.prepare('DELETE FROM files').run();
+    await env.D1.prepare('DELETE FROM file_tags').run();
+    await env.D1.prepare('DELETE FROM files').run();
 
     await SELF.fetch('http://localhost/files', {
       method: 'POST',
@@ -512,8 +512,8 @@ describe('DELETE /files - Delete file by remote tuple', () => {
 
 describe('GET /files/index - Nested index', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_tags').run();
-    await env.DB.prepare('DELETE FROM files').run();
+    await env.D1.prepare('DELETE FROM file_tags').run();
+    await env.D1.prepare('DELETE FROM files').run();
 
     const files = [
       { ...validFileInput, entity: 'user-1', extension: 'pdf', name: 'PDF File', size: 100 },
@@ -573,8 +573,8 @@ describe('GET /files/index - Nested index', () => {
 
 describe('Tag filtering', () => {
   beforeEach(async () => {
-    await env.DB.prepare('DELETE FROM file_tags').run();
-    await env.DB.prepare('DELETE FROM files').run();
+    await env.D1.prepare('DELETE FROM file_tags').run();
+    await env.D1.prepare('DELETE FROM files').run();
 
     const files = [
       { ...validFileInput, remote_filename: 'file1.pdf', tags: ['tag-a', 'tag-b'] },

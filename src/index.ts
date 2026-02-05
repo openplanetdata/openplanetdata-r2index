@@ -58,7 +58,7 @@ app.post('/maintenance/cleanup-downloads', async (c) => {
     return c.json({ error: 'DOWNLOADS_RETENTION_DAYS must be positive' }, 400);
   }
 
-  const deleted = await cleanupOldDownloads(c.env.DB, retentionDays);
+  const deleted = await cleanupOldDownloads(c.env.D1, retentionDays);
   return c.json({ deleted, retention_days: retentionDays });
 });
 

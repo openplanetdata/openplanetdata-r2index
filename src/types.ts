@@ -1,7 +1,7 @@
 export interface Env {
   API_TOKEN: string;
   CACHE_MAX_AGE?: string;
-  DB: D1Database;
+  D1: D1Database;
   DOWNLOADS_RETENTION_DAYS?: string; // Days to keep download records (default: no limit)
 }
 
