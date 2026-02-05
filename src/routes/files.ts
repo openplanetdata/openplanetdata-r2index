@@ -12,6 +12,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 function getSearchParams(c: Context): SearchParams {
   return {
+    bucket: c.req.query('bucket'),
     category: c.req.query('category'),
     entity: c.req.query('entity'),
     extension: c.req.query('extension'),
@@ -26,6 +27,7 @@ function getSearchParams(c: Context): SearchParams {
 
 function getFilterParams(c: Context): SearchParams {
   return {
+    bucket: c.req.query('bucket'),
     category: c.req.query('category'),
     entity: c.req.query('entity'),
     extension: c.req.query('extension'),
@@ -144,6 +146,7 @@ app.delete('/', async (c) => {
 
   const deleted = await deleteFileByRemote(
     c.env.DB,
+    parsed.data.bucket,
     parsed.data.remote_path,
     parsed.data.remote_filename,
     parsed.data.remote_version

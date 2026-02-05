@@ -37,7 +37,7 @@ CHECKIP_URL = "https://checkip.amazonaws.com"
 DEFAULT_USER_AGENT = "elaunira-r2index/0.1.0"
 
 
-def _parse_object_id(object_id: str) -> RemoteTuple:
+def _parse_object_id(object_id: str, bucket: str) -> RemoteTuple:
     """
     Parse an object_id into remote_path, remote_version, and remote_filename.
 
@@ -48,9 +48,10 @@ def _parse_object_id(object_id: str) -> RemoteTuple:
 
     Args:
         object_id: Full object path like /releases/myapp/v1/myapp.zip
+        bucket: The S3/R2 bucket name.
 
     Returns:
-        RemoteTuple with parsed components.
+        RemoteTuple with parsed components including bucket.
 
     Raises:
         ValueError: If object_id doesn't have enough components.
@@ -66,6 +67,7 @@ def _parse_object_id(object_id: str) -> RemoteTuple:
     remote_path = "/" + "/".join(parts[:-2])
 
     return RemoteTuple(
+        bucket=bucket,
         remote_path=remote_path,
         remote_filename=remote_filename,
         remote_version=remote_version,
@@ -148,6 +150,7 @@ class R2IndexClient:
 
     def list_files(
         self,
+        bucket: str | None = None,
         category: str | None = None,
         entity: str | None = None,
         tags: list[str] | None = None,
@@ -158,6 +161,7 @@ class R2IndexClient:
         List files with optional filters.
 
         Args:
+            bucket: Filter by bucket.
             category: Filter by category.
             entity: Filter by entity.
             tags: Filter by tags.
@@ -168,6 +172,8 @@ class R2IndexClient:
             FileListResponse with files and pagination info.
         """
         params: dict[str, Any] = {}
+        if bucket:
+            params["bucket"] = bucket
         if category:
             params["category"] = category
         if entity:
@@ -250,12 +256,13 @@ class R2IndexClient:
         Delete a file by remote tuple.
 
         Args:
-            remote_tuple: The remote path, filename, and version.
+            remote_tuple: The bucket, remote path, filename, and version.
 
         Raises:
             NotFoundError: If the file is not found.
         """
         params = {
+            "bucket": remote_tuple.bucket,
             "remotePath": remote_tuple.remote_path,
             "remoteFilename": remote_tuple.remote_filename,
             "remoteVersion": remote_tuple.remote_version,
@@ -268,7 +275,7 @@ class R2IndexClient:
         Get a file by remote tuple.
 
         Args:
-            remote_tuple: The remote path, filename, and version.
+            remote_tuple: The bucket, remote path, filename, and version.
 
         Returns:
             The FileRecord.
@@ -277,6 +284,7 @@ class R2IndexClient:
             NotFoundError: If the file is not found.
         """
         params = {
+            "bucket": remote_tuple.bucket,
             "remotePath": remote_tuple.remote_path,
             "remoteFilename": remote_tuple.remote_filename,
             "remoteVersion": remote_tuple.remote_version,
@@ -287,6 +295,7 @@ class R2IndexClient:
 
     def get_index(
         self,
+        bucket: str | None = None,
         category: str | None = None,
         entity: str | None = None,
         tags: list[str] | None = None,
@@ -295,6 +304,7 @@ class R2IndexClient:
         Get file index (lightweight listing).
 
         Args:
+            bucket: Filter by bucket.
             category: Filter by category.
             entity: Filter by entity.
             tags: Filter by tags.
@@ -303,6 +313,8 @@ class R2IndexClient:
             List of IndexEntry objects.
         """
         params: dict[str, Any] = {}
+        if bucket:
+            params["bucket"] = bucket
         if category:
             params["category"] = category
         if entity:
@@ -486,6 +498,7 @@ class R2IndexClient:
     def upload_and_register(
         self,
         local_path: str | Path,
+        bucket: str,
         category: str,
         entity: str,
         remote_path: str,
@@ -507,6 +520,7 @@ class R2IndexClient:
 
         Args:
             local_path: Local path to the file to upload.
+            bucket: The S3/R2 bucket name.
             category: File category.
             entity: File entity.
             remote_path: Remote path in R2 (e.g., "/data/files").
@@ -544,6 +558,7 @@ class R2IndexClient:
 
         # Step 4: Register with API
         create_request = FileCreateRequest(
+            bucket=bucket,
             category=category,
             entity=entity,
             remote_path=remote_path,
@@ -568,6 +583,7 @@ class R2IndexClient:
 
     def download_and_record(
         self,
+        bucket: str,
         object_id: str,
         destination: str | Path,
         ip_address: str | None = None,
@@ -585,6 +601,7 @@ class R2IndexClient:
         4. Record the download in the index for analytics
 
         Args:
+            bucket: The S3/R2 bucket name.
             object_id: Full S3 object path in format: /path/to/object/version/filename
                 Example: /releases/myapp/v1/myapp.zip
                 - remote_path: /releases/myapp
@@ -606,7 +623,7 @@ class R2IndexClient:
             NotFoundError: If the file is not found in the index.
             DownloadError: If download fails.
         """
-        uploader = self._get_storage()
+        storage = self._get_storage()
 
         # Resolve defaults
         if ip_address is None:
@@ -615,14 +632,14 @@ class R2IndexClient:
             user_agent = DEFAULT_USER_AGENT
 
         # Step 1: Parse object_id into components
-        remote_tuple = _parse_object_id(object_id)
+        remote_tuple = _parse_object_id(object_id, bucket)
 
         # Step 2: Get file record by tuple
         file_record = self.get_file_by_tuple(remote_tuple)
 
         # Step 3: Build R2 object key and download
         object_key = object_id.strip("/")
-        downloaded_path = uploader.download_file(
+        downloaded_path = storage.download_file(
             object_key,
             destination,
             progress_callback=progress_callback,

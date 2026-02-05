@@ -14,6 +14,7 @@ const createAuthHeaders = () => ({
 });
 
 const validFileInput = {
+  bucket: 'test-bucket',
   category: 'documents',
   entity: 'user-123',
   extension: 'pdf',
@@ -474,6 +475,7 @@ describe('DELETE /files - Delete file by remote tuple', () => {
       method: 'DELETE',
       headers: createAuthHeaders(),
       body: JSON.stringify({
+        bucket: validFileInput.bucket,
         remote_path: validFileInput.remote_path,
         remote_filename: validFileInput.remote_filename,
         remote_version: validFileInput.remote_version,
@@ -489,6 +491,7 @@ describe('DELETE /files - Delete file by remote tuple', () => {
       method: 'DELETE',
       headers: createAuthHeaders(),
       body: JSON.stringify({
+        bucket: 'non-existent-bucket',
         remote_path: '/non-existent',
         remote_filename: 'file.txt',
         remote_version: 'v1',

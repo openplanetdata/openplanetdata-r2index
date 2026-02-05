@@ -41,6 +41,7 @@ function getBucketColumn(scale: AnalyticsScale): string {
 }
 
 interface FileFilter {
+  bucket?: string;
   remote_path?: string;
   remote_filename?: string;
   remote_version?: string;
@@ -50,6 +51,10 @@ function buildFileConditions(filter: FileFilter): { conditions: string[]; values
   const conditions: string[] = [];
   const values: unknown[] = [];
 
+  if (filter.bucket) {
+    conditions.push('bucket = ?');
+    values.push(filter.bucket);
+  }
   if (filter.remote_path) {
     conditions.push('remote_path = ?');
     values.push(filter.remote_path);
@@ -73,33 +78,35 @@ function buildFileConditions(filter: FileFilter): { conditions: string[]; values
 export async function createDownload(db: D1Database, input: CreateDownloadInput): Promise<DownloadRecord> {
   const id = crypto.randomUUID();
   const downloadedAt = Date.now();
-  const buckets = computeBuckets(downloadedAt);
+  const timeBuckets = computeBuckets(downloadedAt);
 
   await db.prepare(`
-    INSERT INTO file_downloads (id, remote_path, remote_filename, remote_version, ip_address, user_agent, downloaded_at, hour_bucket, day_bucket, month_bucket)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO file_downloads (id, bucket, remote_path, remote_filename, remote_version, ip_address, user_agent, downloaded_at, hour_bucket, day_bucket, month_bucket)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     id,
+    input.bucket,
     input.remote_path,
     input.remote_filename,
     input.remote_version,
     input.ip_address,
     input.user_agent ?? null,
     downloadedAt,
-    buckets.hour_bucket,
-    buckets.day_bucket,
-    buckets.month_bucket
+    timeBuckets.hour_bucket,
+    timeBuckets.day_bucket,
+    timeBuckets.month_bucket
   ).run();
 
   return {
     id,
+    bucket: input.bucket,
     remote_path: input.remote_path,
     remote_filename: input.remote_filename,
     remote_version: input.remote_version,
     ip_address: input.ip_address,
     user_agent: input.user_agent ?? null,
     downloaded_at: downloadedAt,
-    ...buckets,
+    ...timeBuckets,
   };
 }
 
@@ -142,25 +149,28 @@ export async function getTimeSeries(
   // Query per-file stats grouped by time bucket, joined with files to get id
   const query = `
     SELECT
-      d.${bucketCol} as bucket,
+      d.${bucketCol} as time_bucket,
       f.id as file_id,
+      d.bucket,
       d.remote_path,
       d.remote_filename,
       d.remote_version,
       COUNT(*) as downloads,
       COUNT(DISTINCT d.ip_address) as unique_downloads
     FROM file_downloads d
-    LEFT JOIN files f ON f.remote_path = d.remote_path
+    LEFT JOIN files f ON f.bucket = d.bucket
+      AND f.remote_path = d.remote_path
       AND f.remote_filename = d.remote_filename
       AND f.remote_version = d.remote_version
-    ${whereClause.replace(/remote_/g, 'd.remote_').replace(/\b(hour_bucket|day_bucket|month_bucket)\b/g, 'd.$1')}
-    GROUP BY d.${bucketCol}, d.remote_path, d.remote_filename, d.remote_version
+    ${whereClause.replace(/\b(bucket|remote_path|remote_filename|remote_version)\b/g, 'd.$1').replace(/\b(hour_bucket|day_bucket|month_bucket)\b/g, 'd.$1')}
+    GROUP BY d.${bucketCol}, d.bucket, d.remote_path, d.remote_filename, d.remote_version
     ORDER BY d.${bucketCol}, downloads DESC
   `;
 
   const result = await db.prepare(query).bind(...values).all<{
-    bucket: number;
+    time_bucket: number;
     file_id: string | null;
+    bucket: string;
     remote_path: string;
     remote_filename: string;
     remote_version: string;
@@ -168,19 +178,20 @@ export async function getTimeSeries(
     unique_downloads: number;
   }>();
 
-  // Group results by bucket (already sorted by downloads DESC within each bucket)
-  const bucketMap = new Map<number, { files: FileDownloadStats[]; total: number; unique: number }>();
+  // Group results by time bucket (already sorted by downloads DESC within each bucket)
+  const timeBucketMap = new Map<number, { files: FileDownloadStats[]; total: number; unique: number }>();
 
   for (const row of result.results) {
-    if (!bucketMap.has(row.bucket)) {
-      bucketMap.set(row.bucket, { files: [], total: 0, unique: 0 });
+    if (!timeBucketMap.has(row.time_bucket)) {
+      timeBucketMap.set(row.time_bucket, { files: [], total: 0, unique: 0 });
     }
-    const bucket = bucketMap.get(row.bucket)!;
+    const timeBucket = timeBucketMap.get(row.time_bucket)!;
     // Always count total downloads, but only keep top N files per bucket
-    bucket.total += row.downloads;
-    if (bucket.files.length < filesLimit) {
-      bucket.files.push({
+    timeBucket.total += row.downloads;
+    if (timeBucket.files.length < filesLimit) {
+      timeBucket.files.push({
         id: row.file_id,
+        bucket: row.bucket,
         remote_path: row.remote_path,
         remote_filename: row.remote_filename,
         remote_version: row.remote_version,
@@ -201,13 +212,13 @@ export async function getTimeSeries(
   const uniqueResult = await db.prepare(uniqueQuery).bind(...values).all<{ bucket: number; unique_downloads: number }>();
 
   for (const row of uniqueResult.results) {
-    if (bucketMap.has(row.bucket)) {
-      bucketMap.get(row.bucket)!.unique = row.unique_downloads;
+    if (timeBucketMap.has(row.bucket)) {
+      timeBucketMap.get(row.bucket)!.unique = row.unique_downloads;
     }
   }
 
   // Convert to array
-  return Array.from(bucketMap.entries())
+  return Array.from(timeBucketMap.entries())
     .sort(([a], [b]) => a - b)
     .map(([timestamp, data]) => ({
       timestamp,
@@ -287,13 +298,14 @@ export async function getDownloadsByIp(
 
   // Get downloads
   const query = `
-    SELECT remote_path, remote_filename, remote_version, downloaded_at, user_agent
+    SELECT bucket, remote_path, remote_filename, remote_version, downloaded_at, user_agent
     FROM file_downloads
     ${whereClause}
     ORDER BY downloaded_at DESC
     LIMIT ? OFFSET ?
   `;
   const result = await db.prepare(query).bind(...values, limit, offset).all<{
+    bucket: string;
     remote_path: string;
     remote_filename: string;
     remote_version: string;

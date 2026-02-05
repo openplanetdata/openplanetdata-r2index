@@ -19,35 +19,40 @@ class TestParseObjectId:
 
     def test_parse_simple_path(self):
         """Test parsing a simple object ID."""
-        result = _parse_object_id("/releases/myapp/v1/myapp.zip")
+        result = _parse_object_id("/releases/myapp/v1/myapp.zip", "test-bucket")
+        assert result.bucket == "test-bucket"
         assert result.remote_path == "/releases/myapp"
         assert result.remote_version == "v1"
         assert result.remote_filename == "myapp.zip"
 
     def test_parse_deep_path(self):
         """Test parsing a deeply nested object ID."""
-        result = _parse_object_id("/software/tools/releases/myapp/v2/tool.tar.gz")
+        result = _parse_object_id("/software/tools/releases/myapp/v2/tool.tar.gz", "test-bucket")
+        assert result.bucket == "test-bucket"
         assert result.remote_path == "/software/tools/releases/myapp"
         assert result.remote_version == "v2"
         assert result.remote_filename == "tool.tar.gz"
 
     def test_parse_minimal_path(self):
         """Test parsing minimum required components."""
-        result = _parse_object_id("/path/version/file.txt")
+        result = _parse_object_id("/path/version/file.txt", "test-bucket")
+        assert result.bucket == "test-bucket"
         assert result.remote_path == "/path"
         assert result.remote_version == "version"
         assert result.remote_filename == "file.txt"
 
     def test_parse_without_leading_slash(self):
         """Test parsing object ID without leading slash."""
-        result = _parse_object_id("releases/myapp/v1/myapp.zip")
+        result = _parse_object_id("releases/myapp/v1/myapp.zip", "test-bucket")
+        assert result.bucket == "test-bucket"
         assert result.remote_path == "/releases/myapp"
         assert result.remote_version == "v1"
         assert result.remote_filename == "myapp.zip"
 
     def test_parse_with_trailing_slash(self):
         """Test parsing object ID with trailing slash."""
-        result = _parse_object_id("/releases/myapp/v1/myapp.zip/")
+        result = _parse_object_id("/releases/myapp/v1/myapp.zip/", "test-bucket")
+        assert result.bucket == "test-bucket"
         assert result.remote_path == "/releases/myapp"
         assert result.remote_version == "v1"
         assert result.remote_filename == "myapp.zip"
@@ -55,18 +60,18 @@ class TestParseObjectId:
     def test_parse_too_few_components(self):
         """Test error when object ID has too few components."""
         with pytest.raises(ValueError) as exc_info:
-            _parse_object_id("/path/file.txt")
+            _parse_object_id("/path/file.txt", "test-bucket")
         assert "at least 3 components" in str(exc_info.value)
 
     def test_parse_single_component(self):
         """Test error with single component."""
         with pytest.raises(ValueError):
-            _parse_object_id("/file.txt")
+            _parse_object_id("/file.txt", "test-bucket")
 
     def test_parse_empty_string(self):
         """Test error with empty string."""
         with pytest.raises(ValueError):
-            _parse_object_id("")
+            _parse_object_id("", "test-bucket")
 
 
 class TestGetFileByTuple:
@@ -83,9 +88,10 @@ class TestGetFileByTuple:
     def test_get_file_by_tuple(self, client: R2IndexClient, httpx_mock: HTTPXMock):
         """Test getting a file by remote tuple."""
         httpx_mock.add_response(
-            url="https://api.example.com/files/by-tuple?remotePath=%2Freleases%2Fmyapp&remoteFilename=myapp.zip&remoteVersion=v1",
+            url="https://api.example.com/files/by-tuple?bucket=test-bucket&remotePath=%2Freleases%2Fmyapp&remoteFilename=myapp.zip&remoteVersion=v1",
             json={
                 "id": "file123",
+                "bucket": "test-bucket",
                 "category": "software",
                 "entity": "myapp",
                 "remote_path": "/releases/myapp",
@@ -103,6 +109,7 @@ class TestGetFileByTuple:
         )
 
         remote_tuple = RemoteTuple(
+            bucket="test-bucket",
             remote_path="/releases/myapp",
             remote_filename="myapp.zip",
             remote_version="v1",
@@ -110,6 +117,7 @@ class TestGetFileByTuple:
         record = client.get_file_by_tuple(remote_tuple)
 
         assert record.id == "file123"
+        assert record.bucket == "test-bucket"
         assert record.remote_path == "/releases/myapp"
         assert record.remote_filename == "myapp.zip"
         assert record.remote_version == "v1"
@@ -145,9 +153,10 @@ class TestDownloadAndRecord:
 
         # Mock get_file_by_tuple
         httpx_mock.add_response(
-            url="https://api.example.com/files/by-tuple?remotePath=%2Freleases%2Fmyapp&remoteFilename=myapp.zip&remoteVersion=v1",
+            url="https://api.example.com/files/by-tuple?bucket=test-bucket&remotePath=%2Freleases%2Fmyapp&remoteFilename=myapp.zip&remoteVersion=v1",
             json={
                 "id": "file123",
+                "bucket": "test-bucket",
                 "category": "software",
                 "entity": "myapp",
                 "remote_path": "/releases/myapp",
@@ -180,13 +189,14 @@ class TestDownloadAndRecord:
 
         destination = tmp_path / "myapp.zip"
 
-        # Mock the R2 uploader download
+        # Mock the R2 storage download
         with patch.object(
             client_with_r2._get_storage(),
             "download_file",
             return_value=destination,
         ) as mock_download:
             downloaded_path, file_record = client_with_r2.download_and_record(
+                bucket="test-bucket",
                 object_id="/releases/myapp/v1/myapp.zip",
                 destination=str(destination),
             )
@@ -201,9 +211,10 @@ class TestDownloadAndRecord:
         """Test download_and_record with explicit IP and user agent."""
         # Mock get_file_by_tuple
         httpx_mock.add_response(
-            url="https://api.example.com/files/by-tuple?remotePath=%2Freleases%2Fmyapp&remoteFilename=myapp.zip&remoteVersion=v1",
+            url="https://api.example.com/files/by-tuple?bucket=test-bucket&remotePath=%2Freleases%2Fmyapp&remoteFilename=myapp.zip&remoteVersion=v1",
             json={
                 "id": "file123",
+                "bucket": "test-bucket",
                 "category": "software",
                 "entity": "myapp",
                 "remote_path": "/releases/myapp",
@@ -236,13 +247,14 @@ class TestDownloadAndRecord:
 
         destination = tmp_path / "myapp.zip"
 
-        # Mock the R2 uploader download
+        # Mock the R2 storage download
         with patch.object(
             client_with_r2._get_storage(),
             "download_file",
             return_value=destination,
         ):
             downloaded_path, file_record = client_with_r2.download_and_record(
+                bucket="test-bucket",
                 object_id="/releases/myapp/v1/myapp.zip",
                 destination=str(destination),
                 ip_address="10.0.0.1",
@@ -260,6 +272,7 @@ class TestDownloadAndRecord:
 
         with pytest.raises(ValueError) as exc_info:
             client_with_r2.download_and_record(
+                bucket="test-bucket",
                 object_id="/invalid/path",
                 destination=str(destination),
                 ip_address="10.0.0.1",

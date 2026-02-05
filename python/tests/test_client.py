@@ -43,6 +43,7 @@ def test_list_files(client: R2IndexClient, httpx_mock: HTTPXMock):
             "files": [
                 {
                     "id": "file1",
+                    "bucket": "test-bucket",
                     "category": "test",
                     "entity": "entity1",
                     "remote_path": "/path",
@@ -92,6 +93,7 @@ def test_create_file(client: R2IndexClient, httpx_mock: HTTPXMock):
         status_code=201,
         json={
             "id": "new-file",
+            "bucket": "test-bucket",
             "category": "test",
             "entity": "entity1",
             "remote_path": "/path",
@@ -109,6 +111,7 @@ def test_create_file(client: R2IndexClient, httpx_mock: HTTPXMock):
     )
 
     request = FileCreateRequest(
+        bucket="test-bucket",
         category="test",
         entity="entity1",
         remote_path="/path",
@@ -130,6 +133,7 @@ def test_get_file(client: R2IndexClient, httpx_mock: HTTPXMock):
         url="https://api.example.com/files/file123",
         json={
             "id": "file123",
+            "bucket": "test-bucket",
             "category": "test",
             "entity": "entity1",
             "remote_path": "/path",
@@ -188,6 +192,7 @@ def test_validation_error(client: R2IndexClient, httpx_mock: HTTPXMock):
     )
 
     request = FileCreateRequest(
+        bucket="test-bucket",
         category="test",
         entity="entity1",
         remote_path="/path",

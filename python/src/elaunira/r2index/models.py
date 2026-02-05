@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 class RemoteTuple(BaseModel):
     """Remote file identifier tuple."""
 
+    bucket: str
     remote_path: str
     remote_filename: str
     remote_version: str
@@ -17,6 +18,7 @@ class RemoteTuple(BaseModel):
 class FileCreateRequest(BaseModel):
     """Request payload for creating/upserting a file record."""
 
+    bucket: str
     category: str
     entity: str
     remote_path: str
@@ -35,6 +37,7 @@ class FileCreateRequest(BaseModel):
 class FileUpdateRequest(BaseModel):
     """Request payload for updating a file record."""
 
+    bucket: str | None = None
     category: str | None = None
     entity: str | None = None
     remote_path: str | None = None
@@ -54,6 +57,7 @@ class FileRecord(BaseModel):
     """File record as returned by the API."""
 
     id: str
+    bucket: str
     category: str
     entity: str
     remote_path: str
@@ -86,6 +90,7 @@ class IndexEntry(BaseModel):
     """Single entry in the index response."""
 
     id: str
+    bucket: str
     category: str
     entity: str
     remote_path: str

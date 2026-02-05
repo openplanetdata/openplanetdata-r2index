@@ -11,6 +11,7 @@ function getAnalyticsParams(c: Context) {
     start: c.req.query('start'),
     end: c.req.query('end'),
     scale: c.req.query('scale'),
+    bucket: c.req.query('bucket'),
     remote_path: c.req.query('remote_path'),
     remote_filename: c.req.query('remote_filename'),
     remote_version: c.req.query('remote_version'),
@@ -33,14 +34,14 @@ app.get('/timeseries', async (c) => {
     return c.json(validationError(parsed.error.flatten().fieldErrors), 400);
   }
 
-  const { start, end, scale, remote_path, remote_filename, remote_version, limit } = parsed.data;
+  const { start, end, scale, bucket, remote_path, remote_filename, remote_version, limit } = parsed.data;
   const filesLimit = Math.min(parseInt(limit || '100', 10), 1000);
   const data = await getTimeSeries(
     c.env.DB,
     parseInt(start, 10),
     parseInt(end, 10),
     (scale || 'day') as AnalyticsScale,
-    { remote_path, remote_filename, remote_version },
+    { bucket, remote_path, remote_filename, remote_version },
     filesLimit
   );
 
@@ -57,12 +58,12 @@ app.get('/summary', async (c) => {
     return c.json(validationError(parsed.error.flatten().fieldErrors), 400);
   }
 
-  const { start, end, remote_path, remote_filename, remote_version } = parsed.data;
+  const { start, end, bucket, remote_path, remote_filename, remote_version } = parsed.data;
   const summary = await getSummary(
     c.env.DB,
     parseInt(start, 10),
     parseInt(end, 10),
-    { remote_path, remote_filename, remote_version }
+    { bucket, remote_path, remote_filename, remote_version }
   );
 
   c.header('Cache-Control', `public, max-age=${getCacheMaxAge(c)}`);
@@ -106,12 +107,12 @@ app.get('/user-agents', async (c) => {
     return c.json(validationError(parsed.error.flatten().fieldErrors), 400);
   }
 
-  const { start, end, remote_path, remote_filename, remote_version, limit } = parsed.data;
+  const { start, end, bucket, remote_path, remote_filename, remote_version, limit } = parsed.data;
   const data = await getUserAgentStats(
     c.env.DB,
     parseInt(start, 10),
     parseInt(end, 10),
-    { remote_path, remote_filename, remote_version },
+    { bucket, remote_path, remote_filename, remote_version },
     Math.min(parseInt(limit || '20', 10), 100)
   );
 

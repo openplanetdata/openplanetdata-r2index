@@ -34,6 +34,7 @@ async def test_async_list_files(async_client: AsyncR2IndexClient, httpx_mock: HT
             "files": [
                 {
                     "id": "file1",
+                    "bucket": "test-bucket",
                     "category": "test",
                     "entity": "entity1",
                     "remote_path": "/path",
@@ -69,6 +70,7 @@ async def test_async_create_file(async_client: AsyncR2IndexClient, httpx_mock: H
         status_code=201,
         json={
             "id": "new-file",
+            "bucket": "test-bucket",
             "category": "test",
             "entity": "entity1",
             "remote_path": "/path",
@@ -86,6 +88,7 @@ async def test_async_create_file(async_client: AsyncR2IndexClient, httpx_mock: H
     )
 
     request = FileCreateRequest(
+        bucket="test-bucket",
         category="test",
         entity="entity1",
         remote_path="/path",

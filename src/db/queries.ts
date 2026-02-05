@@ -31,6 +31,7 @@ function buildSearchConditions(params: SearchParams): QueryConditions {
   const conditions: string[] = [];
   const values: unknown[] = [];
 
+  if (params.bucket) { conditions.push('f.bucket = ?'); values.push(params.bucket); }
   if (params.category) { conditions.push('f.category = ?'); values.push(params.category); }
   if (params.entity) { conditions.push('f.entity = ?'); values.push(params.entity); }
   if (params.extension) { conditions.push('f.extension = ?'); values.push(params.extension); }
@@ -131,11 +132,12 @@ export async function createFile(db: D1Database, input: CreateFileInput): Promis
   const now = Date.now();
 
   await db.prepare(`
-    INSERT INTO files (id, name, category, entity, extension, media_type, remote_path, remote_filename, remote_version, metadata_path, size, checksum_md5, checksum_sha1, checksum_sha256, checksum_sha512, extra, created, updated)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO files (id, name, bucket, category, entity, extension, media_type, remote_path, remote_filename, remote_version, metadata_path, size, checksum_md5, checksum_sha1, checksum_sha256, checksum_sha512, extra, created, updated)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     id,
     input.name ?? null,
+    input.bucket,
     input.category,
     input.entity,
     input.extension,
@@ -168,6 +170,7 @@ export async function updateFile(db: D1Database, id: string, input: UpdateFileIn
 
   const fields: [keyof UpdateFileInput, string, (v: unknown) => unknown][] = [
     ['name', 'name = ?', v => v],
+    ['bucket', 'bucket = ?', v => v],
     ['category', 'category = ?', v => v],
     ['entity', 'entity = ?', v => v],
     ['extension', 'extension = ?', v => v],
@@ -208,17 +211,17 @@ export async function deleteFile(db: D1Database, id: string): Promise<boolean> {
   return result.meta.changes > 0;
 }
 
-export async function deleteFileByRemote(db: D1Database, remotePath: string, remoteFilename: string, remoteVersion: string): Promise<boolean> {
+export async function deleteFileByRemote(db: D1Database, bucket: string, remotePath: string, remoteFilename: string, remoteVersion: string): Promise<boolean> {
   const result = await db.prepare(
-    'DELETE FROM files WHERE remote_path = ? AND remote_filename = ? AND remote_version = ?'
-  ).bind(remotePath, remoteFilename, remoteVersion).run();
+    'DELETE FROM files WHERE bucket = ? AND remote_path = ? AND remote_filename = ? AND remote_version = ?'
+  ).bind(bucket, remotePath, remoteFilename, remoteVersion).run();
   return result.meta.changes > 0;
 }
 
 export async function upsertFile(db: D1Database, input: CreateFileInput): Promise<{ file: FileRecord; created: boolean }> {
   const existing = await db.prepare(
-    'SELECT id FROM files WHERE remote_path = ? AND remote_filename = ? AND remote_version = ?'
-  ).bind(input.remote_path, input.remote_filename, input.remote_version).first<{ id: string }>();
+    'SELECT id FROM files WHERE bucket = ? AND remote_path = ? AND remote_filename = ? AND remote_version = ?'
+  ).bind(input.bucket, input.remote_path, input.remote_filename, input.remote_version).first<{ id: string }>();
 
   if (existing) {
     const now = Date.now();
@@ -258,7 +261,7 @@ export async function upsertFile(db: D1Database, input: CreateFileInput): Promis
 // Search Operations
 // ============================================================================
 
-const GROUPABLE_FIELDS = ['category', 'entity', 'extension', 'media_type', 'deprecated'] as const;
+const GROUPABLE_FIELDS = ['bucket', 'category', 'entity', 'extension', 'media_type', 'deprecated'] as const;
 
 export async function searchFiles(db: D1Database, params: SearchParams): Promise<SearchResult | GroupedSearchResult> {
   if (params.group_by) {

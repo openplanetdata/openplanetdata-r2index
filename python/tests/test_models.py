@@ -15,6 +15,7 @@ from elaunira.r2index import (
 def test_file_create_request():
     """Test FileCreateRequest model."""
     request = FileCreateRequest(
+        bucket="my-bucket",
         category="software",
         entity="myapp",
         remote_path="/releases",
@@ -29,6 +30,7 @@ def test_file_create_request():
         sha512="jkl012",
     )
 
+    assert request.bucket == "my-bucket"
     assert request.category == "software"
     assert request.tags == ["release", "stable"]
     data = request.model_dump()
@@ -52,6 +54,7 @@ def test_file_record_from_api():
     """Test FileRecord validation from API response."""
     api_response = {
         "id": "file123",
+        "bucket": "my-bucket",
         "category": "software",
         "entity": "myapp",
         "remote_path": "/releases",
@@ -70,6 +73,7 @@ def test_file_record_from_api():
 
     record = FileRecord.model_validate(api_response)
     assert record.id == "file123"
+    assert record.bucket == "my-bucket"
     assert isinstance(record.created_at, datetime)
 
 
@@ -89,11 +93,13 @@ def test_file_list_response_with_alias():
 def test_remote_tuple():
     """Test RemoteTuple model."""
     remote = RemoteTuple(
+        bucket="my-bucket",
         remote_path="/data",
         remote_filename="file.txt",
         remote_version="v1",
     )
 
+    assert remote.bucket == "my-bucket"
     assert remote.remote_path == "/data"
 
 

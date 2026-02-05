@@ -10,6 +10,7 @@ const createAuthHeaders = () => ({
 });
 
 const validDownloadInput = {
+  bucket: 'test-bucket',
   remote_path: '/uploads/documents',
   remote_filename: 'report.pdf',
   remote_version: 'v1',
@@ -345,6 +346,7 @@ describe('Analytics - file id inclusion', () => {
       method: 'POST',
       headers: createAuthHeaders(),
       body: JSON.stringify({
+        bucket: 'test-bucket',
         category: 'test',
         entity: 'test-entity',
         extension: 'pdf',
@@ -739,10 +741,11 @@ describe('POST /maintenance/cleanup-downloads', () => {
     };
 
     await env.DB.prepare(`
-      INSERT INTO file_downloads (id, remote_path, remote_filename, remote_version, ip_address, user_agent, downloaded_at, hour_bucket, day_bucket, month_bucket)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO file_downloads (id, bucket, remote_path, remote_filename, remote_version, ip_address, user_agent, downloaded_at, hour_bucket, day_bucket, month_bucket)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       'old-download-id',
+      'test-bucket',
       '/old/path',
       'old.pdf',
       'v1',

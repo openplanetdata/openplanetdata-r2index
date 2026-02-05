@@ -10,6 +10,7 @@ export interface Variables {
 }
 
 export interface FileRecord {
+  bucket: string;
   category: string;
   checksum_md5: string | null;
   checksum_sha1: string | null;
@@ -34,6 +35,7 @@ export interface FileRecord {
 }
 
 export interface CreateFileInput {
+  bucket: string;
   category: string;
   checksum_md5?: string;
   checksum_sha1?: string;
@@ -53,6 +55,7 @@ export interface CreateFileInput {
 }
 
 export interface UpdateFileInput {
+  bucket?: string;
   category?: string;
   checksum_md5?: string;
   checksum_sha1?: string;
@@ -74,6 +77,7 @@ export interface UpdateFileInput {
 }
 
 export interface SearchParams {
+  bucket?: string;
   category?: string;
   deprecated?: string;
   entity?: string;
@@ -118,6 +122,7 @@ export type NestedIndex = Record<string, Record<string, FileIndexEntry>>;
 // Downloads tracking
 export interface DownloadRecord {
   id: string;
+  bucket: string;
   remote_path: string;
   remote_filename: string;
   remote_version: string;
@@ -130,6 +135,7 @@ export interface DownloadRecord {
 }
 
 export interface CreateDownloadInput {
+  bucket: string;
   remote_path: string;
   remote_filename: string;
   remote_version: string;
@@ -143,6 +149,7 @@ export interface AnalyticsParams {
   start: number;
   end: number;
   scale?: AnalyticsScale;
+  bucket?: string;
   remote_path?: string;
   remote_filename?: string;
   remote_version?: string;
@@ -153,6 +160,7 @@ export interface AnalyticsParams {
 
 export interface FileDownloadStats {
   id: string | null;
+  bucket: string;
   remote_path: string;
   remote_filename: string;
   remote_version: string;
@@ -176,6 +184,7 @@ export interface AnalyticsSummary {
 
 export interface DownloadsByIpResult {
   downloads: {
+    bucket: string;
     remote_path: string;
     remote_filename: string;
     remote_version: string;

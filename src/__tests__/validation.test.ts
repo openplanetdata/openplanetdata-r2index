@@ -3,6 +3,7 @@ import { createFileSchema, updateFileSchema, deleteByRemoteSchema, searchParamsS
 
 describe('createFileSchema', () => {
   const validInput = {
+    bucket: 'my-bucket',
     category: 'documents',
     entity: 'user-123',
     extension: 'pdf',
@@ -167,6 +168,7 @@ describe('updateFileSchema', () => {
 describe('deleteByRemoteSchema', () => {
   it('accepts valid remote tuple', () => {
     const result = deleteByRemoteSchema.safeParse({
+      bucket: 'my-bucket',
       remote_path: '/uploads',
       remote_filename: 'file.txt',
       remote_version: 'v1',
@@ -244,7 +246,7 @@ describe('searchParamsSchema', () => {
   });
 
   it('accepts valid group_by values', () => {
-    const validGroupBy = ['category', 'entity', 'extension', 'media_type', 'deprecated'];
+    const validGroupBy = ['bucket', 'category', 'entity', 'extension', 'media_type', 'deprecated'];
     for (const group_by of validGroupBy) {
       const result = searchParamsSchema.safeParse({ group_by });
       expect(result.success).toBe(true);
@@ -289,6 +291,7 @@ describe('searchParamsSchema', () => {
 
 describe('createDownloadSchema', () => {
   const validInput = {
+    bucket: 'my-bucket',
     remote_path: '/uploads/documents',
     remote_filename: 'report.pdf',
     remote_version: 'v1',

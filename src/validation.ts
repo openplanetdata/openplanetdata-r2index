@@ -5,6 +5,7 @@ import { z } from 'zod';
 // ============================================================================
 
 export const createFileSchema = z.object({
+  bucket: z.string().min(1).max(100),
   category: z.string().min(1).max(100),
   checksum_md5: z.string().length(32).regex(/^[a-f0-9]+$/i).optional(),
   checksum_sha1: z.string().length(40).regex(/^[a-f0-9]+$/i).optional(),
@@ -30,6 +31,7 @@ export type CreateFileInput = z.infer<typeof createFileSchema>;
 // ============================================================================
 
 export const updateFileSchema = z.object({
+  bucket: z.string().min(1).max(100).optional(),
   category: z.string().min(1).max(100).optional(),
   checksum_md5: z.string().length(32).regex(/^[a-f0-9]+$/i).optional(),
   checksum_sha1: z.string().length(40).regex(/^[a-f0-9]+$/i).optional(),
@@ -57,6 +59,7 @@ export type UpdateFileInput = z.infer<typeof updateFileSchema>;
 // ============================================================================
 
 export const deleteByRemoteSchema = z.object({
+  bucket: z.string().min(1).max(100),
   remote_filename: z.string().min(1).max(255),
   remote_path: z.string().min(1).max(500),
   remote_version: z.string().min(1).max(100),
@@ -69,11 +72,12 @@ export type DeleteByRemoteInput = z.infer<typeof deleteByRemoteSchema>;
 // ============================================================================
 
 export const searchParamsSchema = z.object({
+  bucket: z.string().max(100).optional(),
   category: z.string().max(100).optional(),
   deprecated: z.enum(['true', 'false']).optional(),
   entity: z.string().max(100).optional(),
   extension: z.string().max(50).optional(),
-  group_by: z.enum(['category', 'entity', 'extension', 'media_type', 'deprecated']).optional(),
+  group_by: z.enum(['bucket', 'category', 'entity', 'extension', 'media_type', 'deprecated']).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
   media_type: z.string().max(100).optional(),
   offset: z.string().regex(/^\d+$/).optional(),
@@ -87,6 +91,7 @@ export type SearchParams = z.infer<typeof searchParamsSchema>;
 // ============================================================================
 
 export const createDownloadSchema = z.object({
+  bucket: z.string().min(1).max(100),
   remote_path: z.string().min(1).max(500),
   remote_filename: z.string().min(1).max(255),
   remote_version: z.string().min(1).max(100),
@@ -104,6 +109,7 @@ export const analyticsParamsSchema = z.object({
   start: z.string().regex(/^\d+$/),
   end: z.string().regex(/^\d+$/),
   scale: z.enum(['hour', 'day', 'month']).optional(),
+  bucket: z.string().max(100).optional(),
   remote_path: z.string().max(500).optional(),
   remote_filename: z.string().max(255).optional(),
   remote_version: z.string().max(100).optional(),
