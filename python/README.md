@@ -25,8 +25,8 @@ client = R2IndexClient(
 
 # Upload and register a file
 record = client.upload_and_register(
-    local_path="./myfile.zip",
     bucket="my-bucket",
+    local_path="./myfile.zip",
     category="software",
     entity="myapp",
     remote_path="/releases/myapp",
@@ -58,8 +58,8 @@ async with AsyncR2IndexClient(
 ) as client:
     # Upload
     record = await client.upload_and_register(
-        local_path="./myfile.zip",
         bucket="my-bucket",
+        local_path="./myfile.zip",
         category="software",
         entity="myapp",
         remote_path="/releases/myapp",

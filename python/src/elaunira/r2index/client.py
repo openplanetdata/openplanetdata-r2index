@@ -511,8 +511,8 @@ class R2IndexClient:
 
     def upload_and_register(
         self,
-        local_path: str | Path,
         bucket: str,
+        local_path: str | Path,
         category: str,
         entity: str,
         remote_path: str,
@@ -533,8 +533,8 @@ class R2IndexClient:
         3. Register with r2index API
 
         Args:
-            local_path: Local path to the file to upload.
             bucket: The S3/R2 bucket name.
+            local_path: Local path to the file to upload.
             category: File category.
             entity: File entity.
             remote_path: Remote path in R2 (e.g., "/data/files").
