@@ -29,6 +29,7 @@ client = R2IndexClient(
 # Upload and register a file
 record = client.upload_and_register(
     local_path="./myfile.zip",
+    bucket="my-bucket",
     category="software",
     entity="myapp",
     remote_path="/releases/myapp",
@@ -40,6 +41,7 @@ record = client.upload_and_register(
 # Download a file and record the download
 # IP address is auto-detected, user agent defaults to "elaunira-r2index/0.1.0"
 path, record = client.download_and_record(
+    bucket="my-bucket",
     object_id="/releases/myapp/v1/myapp.zip",
     destination="./downloads/myfile.zip",
 )
@@ -63,16 +65,18 @@ async with AsyncR2IndexClient(
     # Upload
     record = await client.upload_and_register(
         local_path="./myfile.zip",
+        bucket="my-bucket",
+        category="software",
+        entity="myapp",
         remote_path="/releases/myapp",
         remote_filename="myapp.zip",
         remote_version="v1",
-        category="software",
-        entity="myapp",
         tags=["release", "stable"],
     )
 
     # Download
     path, record = await client.download_and_record(
+        bucket="my-bucket",
         object_id="/releases/myapp/v1/myapp.zip",
         destination="./downloads/myfile.zip",
     )
@@ -100,6 +104,7 @@ transfer_config = R2TransferConfig(
 )
 
 path, record = client.download_and_record(
+    bucket="my-bucket",
     object_id="/data/files/v2/largefile.zip",
     destination="./downloads/largefile.zip",
     transfer_config=transfer_config,
@@ -115,6 +120,7 @@ def on_progress(bytes_transferred: int) -> None:
     print(f"Downloaded: {bytes_transferred / 1024 / 1024:.1f} MB")
 
 path, record = client.download_and_record(
+    bucket="my-bucket",
     object_id="/releases/myapp/v1/myapp.zip",
     destination="./downloads/myfile.zip",
     progress_callback=on_progress,

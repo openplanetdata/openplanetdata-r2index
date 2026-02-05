@@ -93,13 +93,14 @@ CACHE_MAX_AGE = "60"
 
 ### Remote Location (Unique Constraint)
 
-The tuple `(remote_path, remote_filename, remote_version)` uniquely identifies a file in R2:
+The tuple `(bucket, remote_path, remote_filename, remote_version)` uniquely identifies a file in R2:
 
 | Field | Description | Example |
 |-------|-------------|---------|
+| `bucket` | S3/R2 bucket name | `my-bucket` |
 | `remote_path` | Directory path in R2 | `acme/abuser` |
 | `remote_filename` | File name in R2 | `abuser.csv` |
-| `remote_version` | Version identifier | `2026-02-03`, `v1.0.0` |
+| `remote_version` | Version identifier | `2026-02-03`, `v1` |
 
 ### Optional Metadata
 
@@ -134,12 +135,13 @@ Returns `{ "status": "ok" }`. No authentication required.
 POST /files
 ```
 
-Creates or updates a file based on the unique constraint `(remote_path, remote_filename, remote_version)`.
+Creates or updates a file based on the unique constraint `(bucket, remote_path, remote_filename, remote_version)`.
 
 **Request Body:**
 
 ```json
 {
+  "bucket": "my-bucket",
   "category": "acme",
   "entity": "acme-abuser",
   "extension": "csv",
@@ -163,6 +165,7 @@ Creates or updates a file based on the unique constraint `(remote_path, remote_f
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `bucket` | string | Yes | S3/R2 bucket name |
 | `category` | string | Yes | Product or service grouping (e.g., `acme`) |
 | `checksum_md5` | string | No | MD5 hash |
 | `checksum_sha1` | string | No | SHA1 hash |
@@ -222,6 +225,7 @@ Removes file metadata from the index. Does **not** delete the actual file in R2.
 
 ```json
 {
+  "bucket": "my-bucket",
   "remote_path": "acme/abuser",
   "remote_filename": "abuser.csv",
   "remote_version": "2026-02-03"
@@ -240,6 +244,7 @@ GET /files
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
+| `bucket` | string | Filter by bucket (exact match) |
 | `category` | string | Filter by category (exact match) |
 | `deprecated` | boolean | Filter by deprecated status (`true` or `false`) |
 | `entity` | string | Filter by entity (exact match) |
@@ -248,7 +253,7 @@ GET /files
 | `media_type` | string | Filter by media type (exact match) |
 | `offset` | integer | Pagination offset (default: 0) |
 | `tags` | string | Filter by tags (comma-separated, must have ALL) |
-| `group_by` | string | Group results by field: `category`, `entity`, `extension`, `media_type`, `deprecated` |
+| `group_by` | string | Group results by field: `bucket`, `category`, `entity`, `extension`, `media_type`, `deprecated` |
 
 **Example Requests:**
 
@@ -298,6 +303,7 @@ curl "https://r2index.acme.com/files?category=acme&group_by=extension"
   "files": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
+      "bucket": "my-bucket",
       "name": "Abuser",
       "category": "acme",
       "entity": "acme-abuser",
@@ -396,6 +402,7 @@ Records a file download event for analytics tracking.
 
 ```json
 {
+  "bucket": "my-bucket",
   "remote_path": "acme/abuser",
   "remote_filename": "abuser.csv",
   "remote_version": "2026-02-03",
@@ -406,6 +413,7 @@ Records a file download event for analytics tracking.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `bucket` | string | Yes | S3/R2 bucket name |
 | `remote_path` | string | Yes | Directory path in R2 |
 | `remote_filename` | string | Yes | File name in R2 |
 | `remote_version` | string | Yes | Version identifier |
@@ -419,6 +427,7 @@ curl -X POST "https://r2index.acme.com/downloads" \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
+    "bucket": "my-bucket",
     "remote_path": "acme/abuser",
     "remote_filename": "abuser.csv",
     "remote_version": "2026-02-03",
@@ -432,6 +441,7 @@ curl -X POST "https://r2index.acme.com/downloads" \
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
+  "bucket": "my-bucket",
   "remote_path": "acme/abuser",
   "remote_filename": "abuser.csv",
   "remote_version": "2026-02-03",
@@ -459,6 +469,7 @@ Returns download counts over time, grouped by hour, day, or month.
 | `start` | integer | Yes | Start timestamp (ms) |
 | `end` | integer | Yes | End timestamp (ms) |
 | `scale` | string | No | Time bucket: `hour`, `day`, `month` (default: `day`) |
+| `bucket` | string | No | Filter by bucket |
 | `remote_path` | string | No | Filter by remote path |
 | `remote_filename` | string | No | Filter by remote filename |
 | `remote_version` | string | No | Filter by remote version |
@@ -481,6 +492,7 @@ curl "https://r2index.acme.com/analytics/timeseries?start=1704067200000&end=1706
       "files": [
         {
           "id": "550e8400-e29b-41d4-a716-446655440000",
+          "bucket": "my-bucket",
           "remote_path": "acme/abuser",
           "remote_filename": "abuser.csv",
           "remote_version": "2026-02-03",
@@ -489,6 +501,7 @@ curl "https://r2index.acme.com/analytics/timeseries?start=1704067200000&end=1706
         },
         {
           "id": "550e8400-e29b-41d4-a716-446655440001",
+          "bucket": "my-bucket",
           "remote_path": "acme/geolocation",
           "remote_filename": "geolocation.mmdb",
           "remote_version": "2026-02-03",
@@ -566,6 +579,7 @@ curl "https://r2index.acme.com/analytics/by-ip?ip=192.168.1.1&start=170406720000
 {
   "downloads": [
     {
+      "bucket": "my-bucket",
       "remote_path": "acme/abuser",
       "remote_filename": "abuser.csv",
       "remote_version": "2026-02-03",
@@ -655,6 +669,7 @@ export default {
 
 | Column | Type | Description |
 |--------|------|-------------|
+| `bucket` | TEXT | S3/R2 bucket name |
 | `category` | TEXT | File category |
 | `checksum_md5` | TEXT | MD5 checksum |
 | `checksum_sha1` | TEXT | SHA1 checksum |
@@ -676,7 +691,7 @@ export default {
 | `size` | INTEGER | File size in bytes |
 | `updated` | INTEGER | Last update timestamp (ms) |
 
-**Unique Constraint:** `(remote_path, remote_filename, remote_version)`
+**Unique Constraint:** `(bucket, remote_path, remote_filename, remote_version)`
 
 ### file_tags
 
@@ -692,6 +707,7 @@ export default {
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | TEXT | Primary key (auto-generated UUID) |
+| `bucket` | TEXT | S3/R2 bucket name |
 | `remote_path` | TEXT | Path in R2 bucket |
 | `remote_filename` | TEXT | Filename in R2 |
 | `remote_version` | TEXT | Version identifier |
@@ -702,7 +718,7 @@ export default {
 | `day_bucket` | INTEGER | Pre-computed day bucket for fast aggregation |
 | `month_bucket` | INTEGER | Pre-computed month bucket (YYYYMM format) |
 
-**Indexes:** `hour_bucket`, `day_bucket`, `month_bucket`, `(remote_path, remote_filename, remote_version, day_bucket)`, `(ip_address, day_bucket)`
+**Indexes:** `hour_bucket`, `day_bucket`, `month_bucket`, `(bucket, remote_path, remote_filename, remote_version, day_bucket)`, `(ip_address, day_bucket)`
 
 ## Development
 
