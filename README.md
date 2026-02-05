@@ -14,6 +14,21 @@ Client (Airflow, etc.)
 
 The Worker handles metadata only. File content is uploaded/downloaded directly to R2 using the S3-compatible API.
 
+## Who uses it?
+
+<table>
+<tr>
+<td align="center"><a href="https://github.com/ipregistry"><img src="https://avatars.githubusercontent.com/u/48379573?v=4" width="64" /></a></td>
+<td align="center"><a href="https://github.com/noticeable-app"><img src="https://avatars.githubusercontent.com/u/32177975?v=4" width="64" /></a></td>
+<td align="center"><a href="https://github.com/openplanetdata"><img src="https://avatars.githubusercontent.com/u/214255256?v=4" width="64" /></a></td>
+</tr>
+<tr>
+<td align="center">Ipregistry</td>
+<td align="center">Noticeable</td>
+<td align="center">Open Planet Data</td>
+</tr>
+</table>
+
 ## Setup
 
 ### 1. Install dependencies
