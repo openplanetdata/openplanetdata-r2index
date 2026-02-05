@@ -276,13 +276,11 @@ class AsyncR2IndexClient:
         Raises:
             NotFoundError: If the file is not found.
         """
-        params = {
-            "bucket": remote_tuple.bucket,
-            "remotePath": remote_tuple.remote_path,
-            "remoteFilename": remote_tuple.remote_filename,
-            "remoteVersion": remote_tuple.remote_version,
-        }
-        response = await self._client.delete("/files", params=params)
+        response = await self._client.request(
+            "DELETE",
+            "/files",
+            json=remote_tuple.model_dump(by_alias=True),
+        )
         self._handle_response(response)
 
     async def get_by_tuple(self, remote_tuple: RemoteTuple) -> FileRecord:
@@ -300,9 +298,9 @@ class AsyncR2IndexClient:
         """
         params = {
             "bucket": remote_tuple.bucket,
-            "remotePath": remote_tuple.remote_path,
-            "remoteFilename": remote_tuple.remote_filename,
-            "remoteVersion": remote_tuple.remote_version,
+            "remote_path": remote_tuple.remote_path,
+            "remote_filename": remote_tuple.remote_filename,
+            "remote_version": remote_tuple.remote_version,
         }
         response = await self._client.get("/files/by-tuple", params=params)
         data = self._handle_response(response)
@@ -673,3 +671,18 @@ class AsyncR2IndexClient:
         await self.record_download(download_request)
 
         return downloaded_path, file_record
+
+    async def delete_from_r2(self, bucket: str, object_id: str) -> None:
+        """
+        Delete an object from R2 storage.
+
+        Args:
+            bucket: The S3/R2 bucket name.
+            object_id: Full S3 object path (e.g., /path/to/object/version/filename).
+
+        Raises:
+            R2IndexError: If R2 config is not provided or deletion fails.
+        """
+        storage = self._get_storage()
+        object_key = object_id.strip("/")
+        await storage.delete_object(bucket, object_key)
