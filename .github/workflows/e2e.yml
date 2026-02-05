@@ -17,7 +17,7 @@ jobs:
   e2e:
     name: End-to-End Tests
     runs-on: ubuntu-latest
-    if: ${{ vars.E2E_API_URL != '' }}
+    if: ${{ vars.R2INDEX_API_URL != '' }}
 
     steps:
       - uses: actions/checkout@v6
@@ -32,14 +32,14 @@ jobs:
 
       - name: Run E2E tests
         env:
-          E2E_API_URL: ${{ vars.E2E_API_URL }}
-          E2E_API_TOKEN: ${{ secrets.E2E_API_TOKEN }}
+          R2INDEX_API_TOKEN: ${{ secrets.R2INDEX_API_TOKEN }}
+          R2INDEX_API_URL: ${{ vars.R2INDEX_API_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
           if [ "${{ inputs.test_r2 }}" = "true" ] && [ -n "$R2_ACCESS_KEY_ID" ]; then
-            python e2e_test.py "$E2E_API_URL" "$E2E_API_TOKEN" "$R2_ACCESS_KEY_ID" "$R2_SECRET_ACCESS_KEY" "$R2_ACCOUNT_ID"
+            python e2e_test.py "$R2INDEX_API_URL" "$R2INDEX_API_TOKEN" "$R2_ACCESS_KEY_ID" "$R2_SECRET_ACCESS_KEY" "$R2_ACCOUNT_ID"
           else
-            python e2e_test.py "$E2E_API_URL" "$E2E_API_TOKEN"
+            python e2e_test.py "$R2INDEX_API_URL" "$R2INDEX_API_TOKEN"
           fi
