@@ -44,3 +44,17 @@ class DownloadError(R2IndexError):
     """Raised for R2 download failures."""
 
     pass
+
+
+class ChecksumVerificationError(DownloadError):
+    """Raised when checksum verification fails after download."""
+
+    def __init__(
+        self,
+        message: str,
+        expected: str | None = None,
+        actual: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.expected = expected
+        self.actual = actual

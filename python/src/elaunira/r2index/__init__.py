@@ -15,6 +15,7 @@ from .checksums import (
 from .client import R2IndexClient
 from .exceptions import (
     AuthenticationError,
+    ChecksumVerificationError,
     ConflictError,
     DownloadError,
     NotFoundError,
@@ -62,6 +63,7 @@ __all__ = [
     "compute_checksums_from_file_object",
     # Exceptions
     "AuthenticationError",
+    "ChecksumVerificationError",
     "ConflictError",
     "DownloadError",
     "NotFoundError",

@@ -10,6 +10,7 @@ import httpx
 from .checksums import compute_checksums
 from .exceptions import (
     AuthenticationError,
+    ChecksumVerificationError,
     ConflictError,
     NotFoundError,
     R2IndexError,
@@ -544,6 +545,7 @@ class R2IndexClient:
         extra: dict[str, Any] | None = None,
         content_type: str | None = None,
         progress_callback: Callable[[int], None] | None = None,
+        transfer_config: R2TransferConfig | None = None,
         create_checksum_files: bool = False,
     ) -> FileRecord:
         """
@@ -570,6 +572,7 @@ class R2IndexClient:
             extra: Optional extra metadata.
             content_type: Optional content type for R2.
             progress_callback: Optional callback for upload progress.
+            transfer_config: Optional transfer configuration for multipart/threading.
             create_checksum_files: If True, upload checksum files alongside the main
                 file (e.g., file.txt.md5, file.txt.sha256).
 
@@ -596,6 +599,7 @@ class R2IndexClient:
             object_key,
             content_type=content_type,
             progress_callback=progress_callback,
+            transfer_config=transfer_config,
         )
 
         # Step 4: Upload checksum files if requested
@@ -653,6 +657,7 @@ class R2IndexClient:
         user_agent: str | None = None,
         progress_callback: Callable[[int], None] | None = None,
         transfer_config: R2TransferConfig | None = None,
+        verify_checksum: bool = False,
     ) -> tuple[Path, FileRecord]:
         """
         Download a file from R2 and record the download in the index.
@@ -660,7 +665,8 @@ class R2IndexClient:
         This is a convenience method that performs:
         1. Fetch file record from the API
         2. Download the file from R2
-        3. Record the download in the index for analytics
+        3. Optionally verify file integrity using checksums
+        4. Record the download in the index for analytics
 
         Args:
             bucket: The S3/R2 bucket name.
@@ -673,6 +679,8 @@ class R2IndexClient:
             user_agent: User agent string. Defaults to "elaunira-r2index/<version>".
             progress_callback: Optional callback for download progress.
             transfer_config: Optional transfer configuration for multipart/threading.
+            verify_checksum: If True, verify file integrity after download using
+                SHA-256 checksum from the file record.
 
         Returns:
             A tuple of (downloaded file path, file record).
@@ -681,6 +689,7 @@ class R2IndexClient:
             R2IndexError: If R2 config is not provided.
             NotFoundError: If the file is not found in the index.
             DownloadError: If download fails.
+            ChecksumVerificationError: If checksum verification fails.
         """
         storage = self._get_storage()
 
@@ -709,7 +718,19 @@ class R2IndexClient:
             transfer_config=transfer_config,
         )
 
-        # Step 3: Record the download
+        # Step 3: Verify checksum if requested
+        if verify_checksum:
+            expected_checksum = file_record.checksum_sha256
+            if expected_checksum:
+                actual_checksums = compute_checksums(downloaded_path)
+                if actual_checksums.sha256 != expected_checksum:
+                    raise ChecksumVerificationError(
+                        f"SHA-256 checksum mismatch for {source_filename}",
+                        expected=expected_checksum,
+                        actual=actual_checksums.sha256,
+                    )
+
+        # Step 4: Record the download
         download_request = DownloadRecordRequest(
             bucket=bucket,
             remote_path=source_path,
@@ -728,6 +749,7 @@ class R2IndexClient:
         path: str,
         filename: str,
         version: str,
+        delete_checksum_files: bool = False,
     ) -> None:
         """
         Delete an object from R2 storage.
@@ -737,6 +759,8 @@ class R2IndexClient:
             path: Path in R2 (e.g., "/releases/myapp").
             filename: Filename in R2 (e.g., "myapp.zip").
             version: Version identifier (e.g., "v1").
+            delete_checksum_files: If True, also delete checksum sidecar files
+                (.md5, .sha1, .sha256, .sha512) if they exist.
 
         Raises:
             R2IndexError: If R2 config is not provided or deletion fails.
@@ -744,3 +768,12 @@ class R2IndexClient:
         storage = self._get_storage()
         object_key = f"{path.strip('/')}/{version}/{filename}"
         storage.delete_object(bucket, object_key)
+
+        if delete_checksum_files:
+            for ext in ["md5", "sha1", "sha256", "sha512"]:
+                checksum_key = f"{object_key}.{ext}"
+                try:
+                    storage.delete_object(bucket, checksum_key)
+                except Exception:
+                    # Ignore errors - checksum file may not exist
+                    pass

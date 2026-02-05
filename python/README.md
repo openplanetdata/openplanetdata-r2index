@@ -46,6 +46,7 @@ path, record = client.download(
     source_filename="myapp.zip",
     source_version="v1",
     destination="./downloads/myfile.zip",
+    verify_checksum=True,  # Verify SHA-256 checksum after download
 )
 ```
 
@@ -87,7 +88,7 @@ async with AsyncR2IndexClient(
 
 ### Transfer Configuration
 
-Control multipart transfer settings with `R2TransferConfig`:
+Control multipart transfer settings with `R2TransferConfig` for both uploads and downloads:
 
 ```python
 from elaunira.r2index import R2IndexClient, R2TransferConfig
@@ -108,11 +109,26 @@ transfer_config = R2TransferConfig(
     use_threads=True,                        # Enable threading (default)
 )
 
+# Use with upload
+record = client.upload(
+    bucket="my-bucket",
+    source="./largefile.zip",
+    category="data",
+    entity="archive",
+    extension="zip",
+    media_type="application/zip",
+    destination_path="/data/files",
+    destination_filename="largefile.zip",
+    destination_version="v1",
+    transfer_config=transfer_config,
+)
+
+# Use with download
 path, record = client.download(
     bucket="my-bucket",
     source_path="/data/files",
     source_filename="largefile.zip",
-    source_version="v2",
+    source_version="v1",
     destination="./downloads/largefile.zip",
     transfer_config=transfer_config,
 )
@@ -139,12 +155,13 @@ path, record = client.download(
 ### Deleting Files
 
 ```python
-# Delete from R2 storage
+# Delete from R2 storage (including checksum sidecar files if they exist)
 client.delete_from_r2(
     bucket="my-bucket",
     path="/releases/myapp",
     filename="myapp.zip",
     version="v1",
+    delete_checksum_files=True,  # Also delete .md5, .sha1, .sha256, .sha512 files
 )
 
 # Delete from index (metadata only)
