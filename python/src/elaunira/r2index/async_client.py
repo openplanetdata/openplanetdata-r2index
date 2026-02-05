@@ -32,10 +32,11 @@ from .models import (
     TimeseriesResponse,
     UserAgentsResponse,
 )
+from . import __version__
 from .storage import R2Config, R2TransferConfig
 
 CHECKIP_URL = "https://checkip.amazonaws.com"
-DEFAULT_USER_AGENT = "elaunira-r2index/0.1.0"
+DEFAULT_USER_AGENT = f"elaunira-r2index/{__version__}"
 
 
 def _parse_object_id(object_id: str, bucket: str) -> RemoteTuple:

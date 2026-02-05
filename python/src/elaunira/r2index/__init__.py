@@ -1,5 +1,9 @@
 """Python library for uploading and downloading files to/from Cloudflare R2 with the r2index API."""
 
+from importlib.metadata import version
+
+__version__ = version("elaunira-r2index")
+
 from .async_client import AsyncR2IndexClient
 from .async_storage import AsyncR2Storage
 from .checksums import (
@@ -40,6 +44,8 @@ from .models import (
 from .storage import R2Config, R2Storage, R2TransferConfig
 
 __all__ = [
+    # Version
+    "__version__",
     # Clients
     "AsyncR2IndexClient",
     "R2IndexClient",
