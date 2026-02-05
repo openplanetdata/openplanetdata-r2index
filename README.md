@@ -777,16 +777,16 @@ python e2e_test.py <api_url> <api_token> <r2_access_key_id> <r2_secret_access_ke
 ```bash
 # API-only e2e tests
 python e2e_test.py \
-  $(bao kv get -field=api-url -namespace=elaunira/production kv/r2index) \
-  $(bao kv get -field=api-token -namespace=elaunira/production kv/r2index)
+  $(bao kv get -field=api-url -namespace=elaunira/production kv/cloudflare/r2index) \
+  $(bao kv get -field=api-token -namespace=elaunira/production kv/cloudflare/r2index)
 
 # Full e2e tests including R2 upload/download and 5GB large file test
 python e2e_test.py \
-  $(bao kv get -field=api-url -namespace=elaunira/production kv/r2index) \
-  $(bao kv get -field=api-token -namespace=elaunira/production kv/r2index) \
-  $(bao kv get -field=access-key-id -namespace=elaunira/production kv/r2index/r2/e2e-tests) \
-  $(bao kv get -field=secret-access-key -namespace=elaunira/production kv/r2index/r2/e2e-tests) \
-  $(bao kv get -field=account-id -namespace=elaunira/production kv/r2index/r2/e2e-tests)
+  $(bao kv get -field=api-url -namespace=elaunira/production kv/cloudflare/r2index) \
+  $(bao kv get -field=api-token -namespace=elaunira/production kv/cloudflare/r2index) \
+  $(bao kv get -field=access-key-id -namespace=elaunira/production kv/cloudflare/r2/e2e-tests) \
+  $(bao kv get -field=secret-access-key -namespace=elaunira/production kv/cloudflare/r2/e2e-tests) \
+  $(bao kv get -field=account-id -namespace=elaunira/production kv/cloudflare/r2/e2e-tests)
 ```
 
 ## License
