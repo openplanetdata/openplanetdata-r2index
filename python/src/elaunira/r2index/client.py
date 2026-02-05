@@ -95,7 +95,7 @@ class R2IndexClient:
         self._token = api_token
         self._timeout = timeout
         self._r2_config = r2_config
-        self._uploader: R2Storage | None = None
+        self._storage: R2Storage | None = None
 
         self._client = httpx.Client(
             base_url=self.api_url,
@@ -113,13 +113,13 @@ class R2IndexClient:
         """Close the HTTP client."""
         self._client.close()
 
-    def _get_uploader(self) -> R2Storage:
+    def _get_storage(self) -> R2Storage:
         """Get or create the R2 uploader."""
         if self._r2_config is None:
             raise R2IndexError("R2 configuration required for upload operations")
-        if self._uploader is None:
-            self._uploader = R2Storage(self._r2_config)
-        return self._uploader
+        if self._storage is None:
+            self._storage = R2Storage(self._r2_config)
+        return self._storage
 
     def _handle_response(self, response: httpx.Response) -> Any:
         """Handle API response and raise appropriate exceptions."""
@@ -526,7 +526,7 @@ class R2IndexClient:
             UploadError: If upload fails.
         """
         local_path = Path(local_path)
-        uploader = self._get_uploader()
+        uploader = self._get_storage()
 
         # Step 1: Compute checksums
         checksums = compute_checksums(local_path)
@@ -606,7 +606,7 @@ class R2IndexClient:
             NotFoundError: If the file is not found in the index.
             DownloadError: If download fails.
         """
-        uploader = self._get_uploader()
+        uploader = self._get_storage()
 
         # Resolve defaults
         if ip_address is None:

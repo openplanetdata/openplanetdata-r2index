@@ -182,7 +182,7 @@ class TestDownloadAndRecord:
 
         # Mock the R2 uploader download
         with patch.object(
-            client_with_r2._get_uploader(),
+            client_with_r2._get_storage(),
             "download_file",
             return_value=destination,
         ) as mock_download:
@@ -238,7 +238,7 @@ class TestDownloadAndRecord:
 
         # Mock the R2 uploader download
         with patch.object(
-            client_with_r2._get_uploader(),
+            client_with_r2._get_storage(),
             "download_file",
             return_value=destination,
         ):
