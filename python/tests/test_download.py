@@ -74,8 +74,8 @@ class TestParseObjectId:
             _parse_object_id("", "test-bucket")
 
 
-class TestGetFileByTuple:
-    """Tests for get_file_by_tuple method."""
+class TestGetByTuple:
+    """Tests for get_by_tuple method."""
 
     @pytest.fixture
     def client(self):
@@ -85,26 +85,28 @@ class TestGetFileByTuple:
             index_api_token="test-token",
         )
 
-    def test_get_file_by_tuple(self, client: R2IndexClient, httpx_mock: HTTPXMock):
+    def test_get_by_tuple(self, client: R2IndexClient, httpx_mock: HTTPXMock):
         """Test getting a file by remote tuple."""
         httpx_mock.add_response(
-            url="https://api.example.com/files/by-tuple?bucket=test-bucket&remotePath=%2Freleases%2Fmyapp&remoteFilename=myapp.zip&remoteVersion=v1",
+            url="https://api.example.com/files/by-tuple?bucket=test-bucket&remote_path=%2Freleases%2Fmyapp&remote_filename=myapp.zip&remote_version=v1",
             json={
                 "id": "file123",
                 "bucket": "test-bucket",
                 "category": "software",
                 "entity": "myapp",
+                "extension": "zip",
+                "media_type": "application/zip",
                 "remote_path": "/releases/myapp",
                 "remote_filename": "myapp.zip",
                 "remote_version": "v1",
                 "tags": [],
                 "size": 1024,
-                "md5": "abc",
-                "sha1": "def",
-                "sha256": "ghi",
-                "sha512": "jkl",
-                "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": "2024-01-01T00:00:00Z",
+                "checksum_md5": "abc",
+                "checksum_sha1": "def",
+                "checksum_sha256": "ghi",
+                "checksum_sha512": "jkl",
+                "created": 1704067200,
+                "updated": 1704067200,
             },
         )
 
@@ -123,8 +125,8 @@ class TestGetFileByTuple:
         assert record.remote_version == "v1"
 
 
-class TestDownloadAndRecord:
-    """Tests for download_and_record method."""
+class TestDownload:
+    """Tests for download method."""
 
     @pytest.fixture
     def client_with_r2(self):
@@ -137,35 +139,37 @@ class TestDownloadAndRecord:
             r2_endpoint_url="https://r2.example.com",
         )
 
-    def test_download_and_record_with_defaults(
+    def test_download_with_defaults(
         self, client_with_r2: R2IndexClient, httpx_mock: HTTPXMock, tmp_path: Path
     ):
-        """Test download_and_record with default IP and user agent."""
+        """Test download with default IP and user agent."""
         # Mock checkip.amazonaws.com
         httpx_mock.add_response(
             url="https://checkip.amazonaws.com",
             text="203.0.113.1\n",
         )
 
-        # Mock get_file_by_tuple
+        # Mock get_by_tuple
         httpx_mock.add_response(
-            url="https://api.example.com/files/by-tuple?bucket=test-bucket&remotePath=%2Freleases%2Fmyapp&remoteFilename=myapp.zip&remoteVersion=v1",
+            url="https://api.example.com/files/by-tuple?bucket=test-bucket&remote_path=%2Freleases%2Fmyapp&remote_filename=myapp.zip&remote_version=v1",
             json={
                 "id": "file123",
                 "bucket": "test-bucket",
                 "category": "software",
                 "entity": "myapp",
+                "extension": "zip",
+                "media_type": "application/zip",
                 "remote_path": "/releases/myapp",
                 "remote_filename": "myapp.zip",
                 "remote_version": "v1",
                 "tags": [],
                 "size": 1024,
-                "md5": "abc",
-                "sha1": "def",
-                "sha256": "ghi",
-                "sha512": "jkl",
-                "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": "2024-01-01T00:00:00Z",
+                "checksum_md5": "abc",
+                "checksum_sha1": "def",
+                "checksum_sha256": "ghi",
+                "checksum_sha512": "jkl",
+                "created": 1704067200,
+                "updated": 1704067200,
             },
         )
 
@@ -176,10 +180,13 @@ class TestDownloadAndRecord:
             status_code=201,
             json={
                 "id": "download123",
-                "fileId": "file123",
-                "ipAddress": "203.0.113.1",
-                "userAgent": "elaunira-r2index/0.1.0",
-                "downloadedAt": "2024-01-01T00:00:00Z",
+                "bucket": "test-bucket",
+                "remote_path": "/releases/myapp",
+                "remote_filename": "myapp.zip",
+                "remote_version": "v1",
+                "ip_address": "203.0.113.1",
+                "user_agent": "elaunira-r2index/0.1.0",
+                "downloaded_at": 1704067200,
             },
         )
 
@@ -201,29 +208,31 @@ class TestDownloadAndRecord:
             assert downloaded_path == destination
             assert file_record.id == "file123"
 
-    def test_download_and_record_with_explicit_ip_and_user_agent(
+    def test_download_with_explicit_ip_and_user_agent(
         self, client_with_r2: R2IndexClient, httpx_mock: HTTPXMock, tmp_path: Path
     ):
-        """Test download_and_record with explicit IP and user agent."""
-        # Mock get_file_by_tuple
+        """Test download with explicit IP and user agent."""
+        # Mock get_by_tuple
         httpx_mock.add_response(
-            url="https://api.example.com/files/by-tuple?bucket=test-bucket&remotePath=%2Freleases%2Fmyapp&remoteFilename=myapp.zip&remoteVersion=v1",
+            url="https://api.example.com/files/by-tuple?bucket=test-bucket&remote_path=%2Freleases%2Fmyapp&remote_filename=myapp.zip&remote_version=v1",
             json={
                 "id": "file123",
                 "bucket": "test-bucket",
                 "category": "software",
                 "entity": "myapp",
+                "extension": "zip",
+                "media_type": "application/zip",
                 "remote_path": "/releases/myapp",
                 "remote_filename": "myapp.zip",
                 "remote_version": "v1",
                 "tags": [],
                 "size": 1024,
-                "md5": "abc",
-                "sha1": "def",
-                "sha256": "ghi",
-                "sha512": "jkl",
-                "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": "2024-01-01T00:00:00Z",
+                "checksum_md5": "abc",
+                "checksum_sha1": "def",
+                "checksum_sha256": "ghi",
+                "checksum_sha512": "jkl",
+                "created": 1704067200,
+                "updated": 1704067200,
             },
         )
 
@@ -234,10 +243,13 @@ class TestDownloadAndRecord:
             status_code=201,
             json={
                 "id": "download123",
-                "fileId": "file123",
-                "ipAddress": "10.0.0.1",
-                "userAgent": "custom-agent/1.0",
-                "downloadedAt": "2024-01-01T00:00:00Z",
+                "bucket": "test-bucket",
+                "remote_path": "/releases/myapp",
+                "remote_filename": "myapp.zip",
+                "remote_version": "v1",
+                "ip_address": "10.0.0.1",
+                "user_agent": "custom-agent/1.0",
+                "downloaded_at": 1704067200,
             },
         )
 
@@ -260,10 +272,10 @@ class TestDownloadAndRecord:
             assert downloaded_path == destination
             assert file_record.id == "file123"
 
-    def test_download_and_record_invalid_object_id(
+    def test_download_invalid_object_id(
         self, client_with_r2: R2IndexClient, tmp_path: Path
     ):
-        """Test download_and_record with invalid object ID."""
+        """Test download with invalid object ID."""
         destination = tmp_path / "file.zip"
 
         with pytest.raises(ValueError) as exc_info:

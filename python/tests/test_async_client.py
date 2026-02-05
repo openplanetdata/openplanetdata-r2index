@@ -26,7 +26,7 @@ async def test_async_client_context_manager():
 
 
 @pytest.mark.asyncio
-async def test_async_list_files(async_client: AsyncR2IndexClient, httpx_mock: HTTPXMock):
+async def test_async_list(async_client: AsyncR2IndexClient, httpx_mock: HTTPXMock):
     """Test async listing files."""
     httpx_mock.add_response(
         url="https://api.example.com/files",
@@ -37,22 +37,22 @@ async def test_async_list_files(async_client: AsyncR2IndexClient, httpx_mock: HT
                     "bucket": "test-bucket",
                     "category": "test",
                     "entity": "entity1",
+                    "extension": "txt",
+                    "media_type": "text/plain",
                     "remote_path": "/path",
                     "remote_filename": "file.txt",
                     "remote_version": "v1",
                     "tags": [],
                     "size": 100,
-                    "md5": "abc",
-                    "sha1": "def",
-                    "sha256": "ghi",
-                    "sha512": "jkl",
-                    "created_at": "2024-01-01T00:00:00Z",
-                    "updated_at": "2024-01-01T00:00:00Z",
+                    "checksum_md5": "abc",
+                    "checksum_sha1": "def",
+                    "checksum_sha256": "ghi",
+                    "checksum_sha512": "jkl",
+                    "created": 1704067200,
+                    "updated": 1704067200,
                 }
             ],
             "total": 1,
-            "page": 1,
-            "pageSize": 20,
         },
     )
 
@@ -62,7 +62,7 @@ async def test_async_list_files(async_client: AsyncR2IndexClient, httpx_mock: HT
 
 
 @pytest.mark.asyncio
-async def test_async_create_file(async_client: AsyncR2IndexClient, httpx_mock: HTTPXMock):
+async def test_async_create(async_client: AsyncR2IndexClient, httpx_mock: HTTPXMock):
     """Test async creating a file record."""
     httpx_mock.add_response(
         url="https://api.example.com/files",
@@ -73,17 +73,19 @@ async def test_async_create_file(async_client: AsyncR2IndexClient, httpx_mock: H
             "bucket": "test-bucket",
             "category": "test",
             "entity": "entity1",
+            "extension": "txt",
+            "media_type": "text/plain",
             "remote_path": "/path",
             "remote_filename": "file.txt",
             "remote_version": "v1",
             "tags": [],
             "size": 100,
-            "md5": "abc",
-            "sha1": "def",
-            "sha256": "ghi",
-            "sha512": "jkl",
-            "created_at": "2024-01-01T00:00:00Z",
-            "updated_at": "2024-01-01T00:00:00Z",
+            "checksum_md5": "abc",
+            "checksum_sha1": "def",
+            "checksum_sha256": "ghi",
+            "checksum_sha512": "jkl",
+            "created": 1704067200,
+            "updated": 1704067200,
         },
     )
 
@@ -91,14 +93,16 @@ async def test_async_create_file(async_client: AsyncR2IndexClient, httpx_mock: H
         bucket="test-bucket",
         category="test",
         entity="entity1",
+        extension="txt",
+        media_type="text/plain",
         remote_path="/path",
         remote_filename="file.txt",
         remote_version="v1",
         size=100,
-        md5="abc",
-        sha1="def",
-        sha256="ghi",
-        sha512="jkl",
+        checksum_md5="abc",
+        checksum_sha1="def",
+        checksum_sha256="ghi",
+        checksum_sha512="jkl",
     )
     record = await async_client.create(request)
     assert record.id == "new-file"
@@ -112,7 +116,6 @@ async def test_async_health_check(async_client: AsyncR2IndexClient, httpx_mock: 
         url="https://api.example.com/health",
         json={
             "status": "ok",
-            "timestamp": "2024-01-01T00:00:00Z",
         },
     )
 
