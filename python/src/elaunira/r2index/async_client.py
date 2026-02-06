@@ -191,7 +191,7 @@ class AsyncR2IndexClient:
         Returns:
             The created or updated FileRecord.
         """
-        response = await self._client.post("/files", json=data.model_dump(by_alias=True))
+        response = await self._client.post("/files", json=data.model_dump(exclude_none=True, by_alias=True))
         result = self._handle_response(response)
         return FileRecord.model_validate(result)
 
@@ -328,7 +328,7 @@ class AsyncR2IndexClient:
         Returns:
             The created DownloadRecord.
         """
-        response = await self._client.post("/downloads", json=data.model_dump(by_alias=True))
+        response = await self._client.post("/downloads", json=data.model_dump(exclude_none=True, by_alias=True))
         result = self._handle_response(response)
         return DownloadRecord.model_validate(result)
 
