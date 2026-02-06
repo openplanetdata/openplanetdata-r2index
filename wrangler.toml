@@ -3,16 +3,21 @@ main = "src/index.ts"
 compatibility_date = "2026-01-31"
 
 routes = [
-  { pattern = "r2index.elaunira.com/*", zone_name = "elaunira.com" }
+  { pattern = "r2index.openplanetdata.com/*", zone_name = "openplanetdata.com" }
 ]
 
 [[d1_databases]]
 binding = "D1"
 database_name = "r2index"
-database_id = "de77f23f-0f85-403f-b483-2b3db3059b87"
+database_id = "ec01604b-de2b-401f-89fa-981d1fc27e0c"
 
-# R2INDEX_API_TOKEN should be set via: wrangler secret put R2INDEX_API_TOKEN
+# API_TOKEN should be set via: wrangler secret put API_TOKEN
+
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
 
 [vars]
-CACHE_MAX_AGE = "60"
-DOWNLOADS_RETENTION_DAYS = "365"
+CACHE_MAX_AGE = "3600"
+# DOWNLOADS_RETENTION_DAYS = "365"  # Days to keep download records (default: 365)
