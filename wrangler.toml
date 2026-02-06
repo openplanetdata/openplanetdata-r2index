@@ -1,4 +1,4 @@
-name = "r2-index"
+name = "r2index"
 main = "src/index.ts"
 compatibility_date = "2026-01-31"
 
@@ -8,7 +8,7 @@ routes = [
 
 [[d1_databases]]
 binding = "D1"
-database_name = "r2-index"
+database_name = "r2index"
 database_id = "de77f23f-0f85-403f-b483-2b3db3059b87"
 
 # R2INDEX_API_TOKEN should be set via: wrangler secret put R2INDEX_API_TOKEN

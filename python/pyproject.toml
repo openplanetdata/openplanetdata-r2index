@@ -43,8 +43,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/elaunira/elaunira-r2-index"
-Repository = "https://github.com/elaunira/elaunira-r2-index"
+Homepage = "https://github.com/elaunira/elaunira-r2index"
+Repository = "https://github.com/elaunira/elaunira-r2index"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/elaunira"]

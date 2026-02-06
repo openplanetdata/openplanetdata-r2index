@@ -1,11 +1,11 @@
 {
-  "name": "r2-index",
+  "name": "r2index",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "db:init": "wrangler d1 execute r2-index --file=src/db/schema.sql",
+    "db:init": "wrangler d1 execute r2index --file=src/db/schema.sql",
     "test": "vitest run",
     "test:watch": "vitest"
   },
